@@ -1,6 +1,6 @@
 # Menyeberang Ngarai — Game Belajar SD
 
-Game belajar untuk anak SD. Katak melompati papan kayu yang tersebar di ngarai; setiap lompatan dipicu oleh jawaban soal yang tepat. Matematika tersedia untuk Fase A, B, dan C; IPAS serta Bahasa Inggris ditampilkan sebagai mapel yang akan hadir berikutnya. Seluruh permainan berjalan di browser tanpa login, tracking, backend, atau koneksi internet.
+Game belajar untuk anak SD. Katak melompati papan kayu yang tersebar di ngarai; setiap lompatan dipicu oleh jawaban soal yang tepat. Matematika dan IPAS tersedia untuk Fase A, B, dan C. Seluruh permainan berjalan di browser tanpa login, tracking, backend, atau koneksi internet.
 
 ## Menjalankan
 
@@ -14,7 +14,7 @@ Permainan juga dapat dibuka langsung dari `index.html`, tetapi server lokal lebi
 
 ## Cara bermain
 
-1. Pilih mapel Matematika, pilih **Fase A**, **Fase B**, atau **Fase C**, lalu masukkan nama pemain. Targetnya 20 slot soal yang dikuasai.
+1. Pilih mapel Matematika atau IPAS, pilih **Fase A**, **Fase B**, atau **Fase C**, lalu masukkan nama pemain. Targetnya 20 slot soal yang dikuasai.
 2. Baca soal pada papan kayu di bagian atas ngarai.
 3. Pilih satu dari tiga platform jawaban A, B, atau C. Posisi platform berubah relatif terhadap waypoint katak dan membentuk jalur zig-zag.
 4. Jawaban benar membuat katak menetap di platform baru. Jawaban salah atau waktu habis mengurangi satu dari 8 nyawa, mengurangi 5 poin, lalu mengembalikan katak ke waypoint benar terakhir. Slot yang belum dikuasai mendapat soal setara setelah 3–5 soal lain.
@@ -25,7 +25,7 @@ Tombol A–C atau angka 1–3 dapat digunakan selain sentuhan dan klik. Menu pen
 ## Struktur berkas
 
 - `engine.js` berisi `CONFIG`, aturan fase, pengacakan tiga pilihan, antrean remedial, skor, nyawa, waktu, dan status ronde.
-- `questions.js` membuat soal Matematika terkurasi-bervariasi dengan kunci matematika kanonik agar soal yang sama tidak diulang.
+- `questions.js` membuat soal Matematika dan bank soal IPAS per fase dengan tiga pilihan jawaban, ilustrasi, pembahasan, dan latihan ulang.
 - `illustrations.js` berisi ilustrasi SVG ringan untuk soal dan ikon tingkat kelas.
 - `game.js` menangani rendering papan, timer, lompatan katak, suara, jeda, layar hasil, pembahasan, keyboard, dan layar penuh.
 - `styles.css` berisi reskin visual ngarai, papan kayu, tebing, pohon, responsivitas, serta animasi.

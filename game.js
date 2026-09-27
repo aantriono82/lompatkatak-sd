@@ -3,8 +3,9 @@
 
   const { CONFIG, PHASES, Round } = window.FrogEngine || {};
   const labels = ['A', 'B', 'C'];
-  const START_POINT = Object.freeze({ x: 14, y: 79, platformY: 91 });
+  const START_POINT = Object.freeze({ x: 14, y: 91, platformY: 91 });
   const levelInfo = window.FROG_LEVELS || {};
+  const subjectInfo = window.FROG_SUBJECTS || { matematika: { label: 'Matematika', phaseInfo: levelInfo } };
   const questionFactory = window.FrogQuestions || {};
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const stage = document.querySelector('#split-stage');
@@ -33,17 +34,20 @@
   function writeProfiles(profiles) {
     try { localStorage.setItem(profileStorageKey, JSON.stringify(profiles)); } catch (_) {}
   }
-  function getProfile(name, phase) {
+  function getProfile(name, subject, phase) {
     const profiles = readProfiles();
     const key = profileKey(name);
-    return profiles[key]?.[phase] || { lastRoundKeys: [], carry: [] };
+    if (phase === undefined) { phase = subject; subject = 'matematika'; }
+    const legacyProfile = subject === 'matematika' ? profiles[key]?.[phase] : null;
+    return profiles[key]?.[subject]?.[phase] || legacyProfile || { lastRoundKeys: [], carry: [] };
   }
-  function saveProfile(name, phase, data) {
+  function saveProfile(name, subject, phase, data) {
     const profiles = readProfiles();
     const key = profileKey(name);
     if (!key) return;
     profiles[key] ||= {};
-    profiles[key][phase] = { lastRoundKeys: Array.from(new Set(data.lastRoundKeys || [])), carry: Array.isArray(data.carry) ? data.carry : [] };
+    profiles[key][subject] ||= {};
+    profiles[key][subject][phase] = { lastRoundKeys: Array.from(new Set(data.lastRoundKeys || [])), carry: Array.isArray(data.carry) ? data.carry : [] };
     writeProfiles(profiles);
   }
   function clearProfile(name) {
@@ -85,6 +89,10 @@
 
   function formatText(element, value) {
     if (element) element.textContent = value == null ? '' : String(value);
+  }
+
+  function phaseInfoFor(subject, phase) {
+    return subjectInfo[subject]?.phaseInfo?.[phase] || levelInfo[phase];
   }
 
   let croakAudioBuffer = null;
@@ -160,7 +168,7 @@
       this.selectedLevel = 'A';
       this.selectedSubject = 'matematika';
       this.round = null;
-      this.remainingMs = (levelInfo[this.selectedLevel]?.seconds || CONFIG.secondsPerPhase.A) * 1000;
+      this.remainingMs = (phaseInfoFor(this.selectedSubject, this.selectedLevel)?.seconds || CONFIG.secondsPerPhase.A) * 1000;
       this.elapsedMs = 0;
       this.lastFrame = 0;
       this.paused = false;
@@ -256,6 +264,7 @@
 
     bindEvents() {
       this.el.levelButtons.forEach(button => button.addEventListener('click', () => this.selectLevel(button.dataset.level)));
+      this.el.subjectButtons.forEach(button => button.addEventListener('click', () => this.selectSubject(button.dataset.subject)));
       this.el.startButton.addEventListener('click', () => this.startGame(this.selectedLevel));
       this.el.retryButton.addEventListener('click', () => this.startGame(this.selectedLevel));
       this.el.resultHomeButton?.addEventListener('click', () => this.goHome());
@@ -273,10 +282,24 @@
 
     isActive() { return Boolean(this.round && ['playing', 'feedback', 'countdown'].includes(this.round.status)); }
 
+    selectSubject(subject, shouldAnnounce = true) {
+      const info = subjectInfo[subject];
+      if (!info?.phaseInfo || !questionFactory.createRoundQuestions) return false;
+      this.selectedSubject = subject;
+      this.el.subjectButtons.forEach(button => {
+        const active = button.dataset.subject === subject;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+      this.selectLevel(this.selectedLevel, false);
+      if (shouldAnnounce) announce(this.label + ': ' + info.label + ' dipilih.');
+      return true;
+    }
+
     selectLevel(level, shouldAnnounce = true) {
-      if (!levelInfo[level] || !questionFactory.createRoundQuestions) return false;
+      const info = phaseInfoFor(this.selectedSubject, level);
+      if (!info || !questionFactory.createRoundQuestions) return false;
       this.selectedLevel = level;
-      const info = levelInfo[level];
       this.el.levelButtons.forEach(button => {
         const active = button.dataset.level === level;
         button.classList.toggle('active', active);
@@ -301,7 +324,7 @@
     }
 
     clock() {
-      const totalSeconds = this.round?.secondsPerQuestion || levelInfo[this.selectedLevel].seconds;
+      const totalSeconds = this.round?.secondsPerQuestion || phaseInfoFor(this.selectedSubject, this.selectedLevel).seconds;
       const seconds = Math.max(0, Math.ceil(this.remainingMs / 1000));
       formatText(this.el.secondsValue, seconds);
       this.el.countdown.classList.toggle('urgent', seconds <= 5);
@@ -350,7 +373,7 @@
         { x: -22, y: -48 }
       ];
       const camera = Math.max(0, 56 - originWorldY);
-      origin.y = this.clampPosition(originWorldY + camera, 8, 82);
+      origin.y = origin.start ? originWorldY + camera : this.clampPosition(originWorldY + camera, 8, 82);
       if (this.el.frog && !this.isAnswering) this.el.frog.style.top = origin.y + '%';
       const positions = offsets.map((offset, index) => {
         const worldX = this.clampPosition(originWorldX + direction * offset.x + jitter(), 12, 88);
@@ -461,7 +484,7 @@
       const question = this.round.question;
       this.remainingMs = this.round.secondsPerQuestion * 1000;
       const retryLabel = question.retry ? ' · Latihan ulang' : '';
-      this.el.questionCounter.textContent = 'Soal ' + (this.round.presentedCount + 1) + ' · dikuasai ' + this.round.correct + ' / ' + this.round.target + ' · ' + levelInfo[this.round.phase].shortLabel + retryLabel;
+      this.el.questionCounter.textContent = 'Soal ' + (this.round.presentedCount + 1) + ' · dikuasai ' + this.round.correct + ' / ' + this.round.target + ' · ' + phaseInfoFor(this.selectedSubject, this.round.phase).shortLabel + retryLabel;
       formatText(this.el.questionText, question.text);
 
       if (question.illustration && window.FrogIllustrations) {
@@ -476,7 +499,9 @@
         const exists = index < question.options.length;
         button.hidden = !exists;
         button.disabled = !exists;
-        button.className = 'answer-pad pad-' + ['a', 'b', 'c'][index];
+        const answerLength = exists ? String(question.options[index]).length : 0;
+        const answerSize = answerLength > 22 ? ' long-answer' : answerLength > 11 ? ' medium-answer' : '';
+        button.className = 'answer-pad pad-' + ['a', 'b', 'c'][index] + answerSize;
         formatText(button.querySelector('.answer-text'), exists ? question.options[index] : '');
         formatText(button.querySelector('.answer-symbol'), '');
         button.setAttribute('aria-label', exists ? labels[index] + '. ' + cleanForSpeech(question.options[index]) : 'Pilihan tidak digunakan');
@@ -493,14 +518,14 @@
 
     goHome() {
       if (this.round && this.isActive() && this.playerName) {
-        saveProfile(this.playerName, this.round.phase, { lastRoundKeys: this.round.shownKeys(), carry: this.round.unresolvedSlots() });
+        saveProfile(this.playerName, this.selectedSubject, this.round.phase, { lastRoundKeys: this.round.shownKeys(), carry: this.round.unresolvedSlots() });
       }
       this.session += 1;
       this.paused = false;
       this.isAnswering = false;
       this.round = null;
       this.elapsedMs = 0;
-      this.remainingMs = levelInfo[this.selectedLevel].seconds * 1000;
+      this.remainingMs = phaseInfoFor(this.selectedSubject, this.selectedLevel).seconds * 1000;
       this.resetRoute();
       this.clearFrog();
       this.el.startCountdown.hidden = true;
@@ -528,8 +553,9 @@
         return false;
       }
       syncPlayerName(playerName);
-      const profile = getProfile(playerName, level);
+      const profile = getProfile(playerName, this.selectedSubject, level);
       const generated = questionFactory.createRoundQuestions(level, {
+        subject: this.selectedSubject,
         excludeKeys: profile.lastRoundKeys,
         carry: profile.carry
       });
@@ -538,7 +564,7 @@
       this.round = new Round(generated.questions, {
         phase: level,
         target: CONFIG.target,
-        secondsPerQuestion: levelInfo[level].seconds,
+        secondsPerQuestion: phaseInfoFor(this.selectedSubject, level).seconds,
         variantFactory: generated.variantFactory
       });
       this.round.status = 'countdown';
@@ -546,9 +572,10 @@
       this.remainingMs = this.round.secondsPerQuestion * 1000;
       this.paused = false;
       this.isAnswering = false;
-      this.el.headingSuffix.textContent = ' · Matematika · ' + (levelInfo[level].shortLabel || levelInfo[level].label);
-      this.el.sceneLevelLabel.textContent = levelInfo[level].shortLabel || levelInfo[level].label;
-      this.el.sceneTopic.textContent = levelInfo[level].description;
+      const info = phaseInfoFor(this.selectedSubject, level);
+      this.el.headingSuffix.textContent = ' · ' + subjectInfo[this.selectedSubject].label + ' · ' + (info.shortLabel || info.label);
+      this.el.sceneLevelLabel.textContent = info.shortLabel || info.label;
+      this.el.sceneTopic.textContent = info.description;
       this.el.startScreen.hidden = true;
       this.el.resultScreen.hidden = true;
       this.el.questionBox.hidden = true;
@@ -783,7 +810,7 @@
       const bonus = this.round.calculateBonus(this.elapsedMs);
       const won = this.round.isWon;
       const gameOver = this.round.lives === 0;
-      saveProfile(this.playerName, this.round.phase, {
+      saveProfile(this.playerName, this.selectedSubject, this.round.phase, {
         lastRoundKeys: this.round.shownKeys(),
         carry: won ? [] : this.round.unresolvedSlots()
       });
@@ -849,7 +876,7 @@
     snapshot() {
       const level = this.round ? this.round.level : this.selectedLevel;
       return {
-        status: this.round ? this.round.status : 'ready', level, levelLabel: levelInfo[level].label, paused: this.paused,
+        status: this.round ? this.round.status : 'ready', subject: this.selectedSubject, subjectLabel: subjectInfo[this.selectedSubject].label, level, levelLabel: phaseInfoFor(this.selectedSubject, level).label, paused: this.paused,
         score: this.round ? this.round.score : 0, lives: this.round ? this.round.lives : CONFIG.lives,
         correct: this.round ? this.round.correct : 0, total: this.round ? this.round.target : CONFIG.target,
         elapsed: formatTime(this.elapsedMs), secondsRemaining: Math.ceil(this.remainingMs / 1000),

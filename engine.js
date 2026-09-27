@@ -84,7 +84,7 @@
       this.questions.forEach((question, index) => {
         validateQuestion(question);
         const slotId = question.slotId || 'slot-' + index;
-        const slot = { id: slotId, operation: question.operation, format: question.format || 'direct', negative: Boolean(question.negative), tier: question.tier || 1, question, attempts: [], complete: false, questionKeys: [] };
+        const slot = { id: slotId, operation: question.operation, topic: question.topic, bankId: question.bankId, format: question.format || 'direct', negative: Boolean(question.negative), tier: question.tier || 1, question, attempts: [], complete: false, questionKeys: [] };
         this.slots.set(slotId, slot);
         this.usedQuestionKeys.add(question.uniqueKey || question.id || slotId);
         this.questions[index] = { ...question, slotId, retry: false, retryNumber: 0 };
@@ -177,6 +177,8 @@
       return Array.from(this.slots.values()).filter(slot => !slot.complete).map(slot => ({
         id: slot.id,
         operation: slot.operation,
+        topic: slot.topic,
+        bankId: slot.bankId,
         format: slot.format,
         negative: slot.negative,
         tier: slot.tier
