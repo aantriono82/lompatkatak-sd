@@ -3,6 +3,7 @@
 
   const { CONFIG, PHASES, Round } = window.FrogEngine || {};
   const labels = ['A', 'B', 'C'];
+  const START_POINT = Object.freeze({ x: 14, y: 79, platformY: 91 });
   const levelInfo = window.FROG_LEVELS || {};
   const questionFactory = window.FrogQuestions || {};
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -167,7 +168,7 @@
       this.facingAngle = 0;
       this.isAnswering = false;
       this.waypoints = [];
-      this.currentWaypoint = { x: 14, y: 84, worldX: 14, worldY: 84, label: 'START', start: true };
+      this.currentWaypoint = { x: START_POINT.x, y: START_POINT.y, worldX: START_POINT.x, worldY: START_POINT.y, label: 'START', start: true };
       this.lastCorrectWaypoint = this.currentWaypoint;
       this.routeDirection = 1;
       this.cameraShiftY = 0;
@@ -228,7 +229,7 @@
         resultPlayerName: root.querySelector('.result-player-name'),
         subjectButtons: Array.from(root.querySelectorAll('.subject-picker .subject-option')),
         frogIdleSource: 'assets/frogi.png',
-        frogJumpSource: 'assets/frog-jump.png'
+        frogJumpSource: 'assets/froge.png'
       };
 
       const required = ['pond', 'questionBox', 'questionCounter', 'questionText', 'answerField', 'frog', 'frogImg', 'feedback', 'timeGroup', 'countdown', 'timerProgress', 'secondsValue', 'elapsedValue', 'livesValue', 'scoreValue', 'settingsButton', 'startScreen', 'startButton', 'resultScreen', 'resultTitle', 'resultMessage', 'resultScore', 'resultCorrect', 'resultTime', 'retryButton', 'reportButton', 'startCountdown', 'countdownNumber'];
@@ -311,7 +312,7 @@
 
     clearFrog() {
       this.el.frog.getAnimations?.({ subtree: true }).forEach(animation => animation.cancel());
-      const waypoint = this.currentWaypoint || { x: 14, y: 84 };
+      const waypoint = this.currentWaypoint || START_POINT;
       this.el.frog.style.left = waypoint.x + '%';
       this.el.frog.style.top = waypoint.y + '%';
       this.el.frog.style.transform = 'translate(-50%,-55%) rotate(' + (this.facingAngle || 0) + 'deg)';
@@ -321,7 +322,7 @@
 
     resetRoute() {
       this.el.routeLayer?.replaceChildren();
-      this.currentWaypoint = { x: 14, y: 84, worldX: 14, worldY: 84, label: 'START', start: true };
+      this.currentWaypoint = { x: START_POINT.x, y: START_POINT.y, worldX: START_POINT.x, worldY: START_POINT.y, label: 'START', start: true };
       this.lastCorrectWaypoint = this.currentWaypoint;
       this.waypoints = [this.currentWaypoint];
       this.routeDirection = 1;
@@ -329,7 +330,7 @@
       this.el.answerField.style.transform = '';
       this.el.pond.style.backgroundPosition = 'center center';
       this.el.homePlatform.style.left = this.currentWaypoint.x + '%';
-      this.el.homePlatform.style.top = '91%';
+      this.el.homePlatform.style.top = START_POINT.platformY + '%';
     }
 
     clampPosition(value, minimum, maximum) {
@@ -338,7 +339,7 @@
 
     layoutAnswerPlatforms() {
       if (!this.round || !this.el.buttons.length) return;
-      const origin = this.currentWaypoint || { x: 14, y: 84, worldX: 14, worldY: 84 };
+      const origin = this.currentWaypoint || { x: START_POINT.x, y: START_POINT.y, worldX: START_POINT.x, worldY: START_POINT.y };
       const originWorldX = origin.worldX ?? origin.x;
       const originWorldY = origin.worldY ?? origin.y;
       const direction = this.routeDirection;
@@ -718,7 +719,7 @@
       if (!await this.jump(choice, sessionId)) { this.isAnswering = false; return false; }
 
       const selectedPosition = choice === null ? null : this.activePlatformPositions?.[choice];
-      const landing = selectedPosition || (choice === null ? this.currentWaypoint : this.lastLanding) || { x: 14, y: 84 };
+      const landing = selectedPosition || (choice === null ? this.currentWaypoint : this.lastLanding) || START_POINT;
       this.el.buttons.forEach((button, index) => {
         if (index === question.answer) button.classList.add('correct');
         else if (index === choice) { button.classList.add('incorrect'); formatText(button.querySelector('.answer-symbol'), '×'); }

@@ -101,7 +101,7 @@ button:disabled { cursor: default; }
 .home-platform { position: absolute; left: 14%; top: 91%; width: 18%; height: 11%; transform: translate(-50%, -50%); z-index: 4; filter: drop-shadow(0 6px 3px #17312c99) brightness(.8); }
 .home-platform img { width: 100%; height: 100%; object-fit: fill; }
 .home-platform span { position: absolute; inset: 0; display: grid; place-items: center; color: #ffe9a9; font-size: clamp(10px, 1.25cqw, 18px); font-weight: 900; text-shadow: 0 2px #4a2b28; }
-.frog { position: absolute; left: 14%; top: 84%; width: 11%; height: 18%; transform: translate(-50%, -55%); z-index: 9; pointer-events: none; transform-origin: center center; }
+.frog { position: absolute; left: 14%; top: 79%; width: 11%; height: 18%; transform: translate(-50%, -55%); z-index: 9; pointer-events: none; transform-origin: center center; }
 .frog > img { width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 7px 3px #142d2d99); }
 .frog.idle > img { animation: frog-breathe 2.8s ease-in-out infinite; }
 .frog.sink > img { animation: frog-sink .55s ease-in forwards; }
