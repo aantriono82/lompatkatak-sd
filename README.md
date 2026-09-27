@@ -1,6 +1,6 @@
-# Menyeberang Ngarai — Matematika SD
+# Menyeberang Ngarai — Game Belajar SD
 
-Game kuis matematika untuk anak SD. Katak melompati papan kayu yang tersebar di ngarai; setiap lompatan dipicu oleh jawaban soal yang tepat. Seluruh permainan berjalan di browser tanpa login, tracking, backend, atau koneksi internet.
+Game belajar untuk anak SD. Katak melompati papan kayu yang tersebar di ngarai; setiap lompatan dipicu oleh jawaban soal yang tepat. Matematika tersedia untuk Fase A, B, dan C; IPAS serta Bahasa Inggris ditampilkan sebagai mapel yang akan hadir berikutnya. Seluruh permainan berjalan di browser tanpa login, tracking, backend, atau koneksi internet.
 
 ## Menjalankan
 
@@ -14,18 +14,18 @@ Permainan juga dapat dibuka langsung dari `index.html`, tetapi server lokal lebi
 
 ## Cara bermain
 
-1. Pilih tingkat **Kelas 1–2**, **Kelas 3–4**, atau **Kelas 5–6** dan masukkan nama pemain.
+1. Pilih mapel Matematika, pilih **Fase A**, **Fase B**, atau **Fase C**, lalu masukkan nama pemain. Targetnya 20 slot soal yang dikuasai.
 2. Baca soal pada papan kayu di bagian atas ngarai.
-3. Pilih papan jawaban A, B, C, atau D. Kelas 1–2 memakai tiga pilihan agar sesuai dengan tahap belajarnya.
-4. Katak melompat mengikuti jalur melengkung menuju papan yang dipilih. Jawaban salah atau waktu habis mengurangi satu dari 8 nyawa.
-5. Raih minimal 60% jawaban benar untuk menyelesaikan petualangan. Layar hasil menyediakan pembahasan tiap soal.
+3. Pilih satu dari tiga platform jawaban A, B, atau C. Posisi platform berubah relatif terhadap waypoint katak dan membentuk jalur zig-zag.
+4. Jawaban benar membuat katak menetap di platform baru. Jawaban salah atau waktu habis mengurangi satu dari 8 nyawa, mengurangi 5 poin, lalu mengembalikan katak ke waypoint benar terakhir. Slot yang belum dikuasai mendapat soal setara setelah 3–5 soal lain.
+5. Jawaban benar memberi 10 poin. Kuasai 20 slot untuk mencapai papan OUT; layar hasil mengelompokkan seluruh percobaan per slot.
 
-Tombol A–D atau angka 1–4 dapat digunakan selain sentuhan dan klik. Menu pengaturan menjeda timer. Berpindah tab juga menjeda permainan. Tombol layar penuh cocok untuk layar sentuh kecil maupun IFP.
+Tombol A–C atau angka 1–3 dapat digunakan selain sentuhan dan klik. Menu pengaturan menjeda timer. Berpindah tab juga menjeda permainan. Tombol layar penuh cocok untuk layar sentuh kecil maupun IFP.
 
 ## Struktur berkas
 
-- `engine.js` berisi `CONFIG`, pengacakan pilihan, pemilihan soal seimbang, skor, nyawa, waktu, bonus, dan status ronde.
-- `questions.js` berisi bank soal dengan format `{ id, tingkat, operation, text, options, answer, explanation }`. Soal dikelompokkan dalam tiga tingkat kelas agar mudah difilter di layar awal.
+- `engine.js` berisi `CONFIG`, aturan fase, pengacakan tiga pilihan, antrean remedial, skor, nyawa, waktu, dan status ronde.
+- `questions.js` membuat soal Matematika terkurasi-bervariasi dengan kunci matematika kanonik agar soal yang sama tidak diulang.
 - `illustrations.js` berisi ilustrasi SVG ringan untuk soal dan ikon tingkat kelas.
 - `game.js` menangani rendering papan, timer, lompatan katak, suara, jeda, layar hasil, pembahasan, keyboard, dan layar penuh.
 - `styles.css` berisi reskin visual ngarai, papan kayu, tebing, pohon, responsivitas, serta animasi.
@@ -35,7 +35,7 @@ Tidak ada dependensi KaTeX aktif karena soal ditulis sebagai teks matematika bia
 
 ## Mengubah aturan
 
-Edit `CONFIG` di `engine.js` untuk mengubah jumlah nyawa, waktu per tingkat, ambang kelulusan, atau bonus. Jika pilihan soal diubah menjadi tiga atau empat pilihan, `engine.js` dan renderer sudah mendukung keduanya. `answer` selalu merupakan indeks mulai dari `0` setelah pilihan asli ditulis.
+Edit `CONFIG` di `engine.js` untuk mengubah jumlah nyawa, target slot, waktu per fase, jarak remedial, atau nilai skor. Mesin selalu menyajikan tiga pilihan dan mempertahankan jawaban benar. `answer` selalu merupakan indeks mulai dari `0` setelah pilihan diacak.
 
 ## Pemeriksaan cepat
 

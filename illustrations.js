@@ -52,7 +52,13 @@
     'canyon-badge': () => svg(`${common}<path d="M8 102 45 32l23 20 22-45 24 46 22-21 36 70Z" fill="url(#rock)"/><circle cx="90" cy="35" r="15" fill="#f6c96c" stroke="#8c4b32" stroke-width="3"/><path d="M83 35h14M90 28v14" stroke="#8c4b32" stroke-width="3"/>`),
     'icon-kelas-1-2': () => svg(`<circle cx="90" cy="55" r="41" fill="#f4c66e" stroke="#7d4a32" stroke-width="4"/><text x="90" y="66" text-anchor="middle" font-size="30" font-weight="800" fill="#5c352a">1–2</text>`),
     'icon-kelas-3-4': () => svg(`<circle cx="90" cy="55" r="41" fill="#d98b50" stroke="#633b2d" stroke-width="4"/><text x="90" y="66" text-anchor="middle" font-size="30" font-weight="800" fill="#fff1bd">3–4</text>`),
-    'icon-kelas-5-6': () => svg(`<circle cx="90" cy="55" r="41" fill="#6d9d59" stroke="#244f38" stroke-width="4"/><text x="90" y="66" text-anchor="middle" font-size="30" font-weight="800" fill="#fff4c4">5–6</text>`)
+    'icon-kelas-5-6': () => svg(`<circle cx="90" cy="55" r="41" fill="#6d9d59" stroke="#244f38" stroke-width="4"/><text x="90" y="66" text-anchor="middle" font-size="30" font-weight="800" fill="#fff4c4">5–6</text>`),
+    'icon-A': () => svg(`<circle cx="90" cy="55" r="41" fill="#f4c66e" stroke="#7d4a32" stroke-width="4"/><text x="90" y="66" text-anchor="middle" font-size="30" font-weight="800" fill="#5c352a">A</text>`),
+    'icon-B': () => svg(`<circle cx="90" cy="55" r="41" fill="#d98b50" stroke="#633b2d" stroke-width="4"/><text x="90" y="66" text-anchor="middle" font-size="30" font-weight="800" fill="#fff1bd">B</text>`),
+    'icon-C': () => svg(`<circle cx="90" cy="55" r="41" fill="#6d9d59" stroke="#244f38" stroke-width="4"/><text x="90" y="66" text-anchor="middle" font-size="30" font-weight="800" fill="#fff4c4">C</text>`),
+    'icon-subject-matematika': () => svg(`<circle cx="90" cy="55" r="40" fill="#f4c66e" stroke="#7d4a32" stroke-width="4"/><path d="M62 42h56M62 58h56M78 30v50M102 30v50" stroke="#5c352a" stroke-width="5" stroke-linecap="round"/><circle cx="90" cy="55" r="9" fill="#fff4c4"/>`),
+    'icon-subject-ipas': () => svg(`<circle cx="90" cy="55" r="40" fill="#79aa68" stroke="#315e3b" stroke-width="4"/><path d="M90 77c-22-15-25-31-14-42 8 8 13 13 14 22 3-16 11-25 22-30 5 18-2 39-22 50Z" fill="#e7f0b8" stroke="#315e3b" stroke-width="3"/>`),
+    'icon-subject-bahasa-inggris': () => svg(`<circle cx="90" cy="55" r="40" fill="#6f9dcc" stroke="#315076" stroke-width="4"/><text x="90" y="66" text-anchor="middle" font-size="27" font-weight="800" fill="#fff4c4">ABC</text>`)
   };
 
   const api = {

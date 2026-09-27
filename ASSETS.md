@@ -1,6 +1,10 @@
 # Brief aset visual
 
-Semua aset aktif dibuat sebagai aset lokal agar permainan tetap dapat dipakai tanpa koneksi internet. Latar permainan menggunakan `assets/ngarai.webp`; aset karakter dan platform dibuat sebagai SVG buatan baru agar tetap tajam dan ringan.
+Semua aset aktif dibuat sebagai aset lokal agar permainan tetap dapat dipakai tanpa koneksi internet. Latar permainan menggunakan `assets/ngarai-clean.png`; aset karakter dan platform dibuat sebagai SVG buatan baru agar tetap tajam dan ringan.
+
+## assets/ngarai-clean.png
+
+Clean canyon background for the active game scene. The baked-in question card, frog, and gray answer platforms were removed so the live UI can render them independently.
 
 ## assets/canyon-bg.svg
 
@@ -13,6 +17,10 @@ Original transparent vector game character: one cute friendly green frog, front-
 ## assets/frog-jump.svg
 
 Original transparent vector variant of the same frog character. Green frog with big eyes and cream belly in a joyful mid-air leap, arms and legs spread, matching the idle frog's proportions, palette, outline, and face. No platform, no background, no text, no logo, no watermark.
+
+## assets/frog-jump.png
+
+Transparent raster jumping frog based on the supplied reference image. Used while the player frog is moving between the START platform and an answer platform.
 
 ## assets/platform-wood.svg
 

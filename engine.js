@@ -1,20 +1,25 @@
-/* Mesin permainan murni: aturan, pengacakan, dan perhitungan hasil. */
+/* Mesin ronde: progres dihitung dari slot yang dikuasai, bukan jumlah percobaan. */
 (function (root) {
   'use strict';
 
   const CONFIG = Object.freeze({
     lives: 8,
-    questionsPerRound: 10,
-    secondsPerQuestion: Object.freeze({
-      'kelas-1-2': 45,
-      'kelas-3-4': 55,
-      'kelas-5-6': 70
-    }),
-    defaultSecondsPerQuestion: 45,
-    passingThresholdPercent: 60,
+    target: 20,
     pointsPerCorrect: 10,
-    lifeBonusPoints: 2,
-    maxSpeedBonusPoints: 12
+    pointsPerWrong: 5,
+    retryDelay: Object.freeze({ min: 3, max: 5 }),
+    secondsPerPhase: Object.freeze({ A: 45, B: 55, C: 70 }),
+    slotCounts: Object.freeze({
+      A: Object.freeze({ penjumlahan: 10, pengurangan: 10 }),
+      B: Object.freeze({ penjumlahan: 5, pengurangan: 5, perkalian: 5, pembagian: 5 }),
+      C: Object.freeze({ penjumlahan: 5, pengurangan: 5, perkalian: 5, pembagian: 5 })
+    })
+  });
+
+  const PHASES = Object.freeze({
+    A: Object.freeze({ label: 'Fase A · Kelas 1–2', shortLabel: 'Fase A', description: 'Tambah dan kurang sampai 20', seconds: 45 }),
+    B: Object.freeze({ label: 'Fase B · Kelas 3–4', shortLabel: 'Fase B', description: 'Operasi bilangan sampai 1.000', seconds: 55 }),
+    C: Object.freeze({ label: 'Fase C · Kelas 5–6', shortLabel: 'Fase C', description: 'Operasi bilangan sampai 1.000', seconds: 70 })
   });
 
   function shuffled(items, random = Math.random) {
@@ -26,136 +31,164 @@
     return result;
   }
 
+  function randomInt(min, max, random = Math.random) {
+    return min + Math.floor(random() * (max - min + 1));
+  }
+
   function validateQuestion(question) {
     if (!question || typeof question.text !== 'string' || !Array.isArray(question.options)) {
       throw new Error('Format soal tidak valid.');
     }
-    if (question.options.length < 3 || question.options.length > 4 ||
-        question.options.some(option => typeof option !== 'string') ||
+    if (question.options.length !== 3 || question.options.some(option => typeof option !== 'string') ||
         !Number.isInteger(question.answer) || question.answer < 0 || question.answer >= question.options.length) {
-      throw new Error('Soal harus memiliki 3 atau 4 pilihan dan indeks jawaban yang benar.');
+      throw new Error('Soal harus memiliki tiga pilihan dan indeks jawaban yang benar.');
     }
+    if (new Set(question.options).size !== question.options.length) throw new Error('Pilihan jawaban harus unik.');
   }
 
-  function prepareQuestions(bank, random = Math.random, count = null) {
-    if (!Array.isArray(bank) || !bank.length) throw new Error('Bank soal kosong.');
-    const pool = shuffled(bank, random);
-    const selected = typeof count === 'number' && count > 0 && count < pool.length
-      ? pool.slice(0, count)
-      : pool;
-
-    return selected.map(question => {
-      validateQuestion(question);
-      const choices = shuffled(question.options.map((text, index) => ({ text, index })), random);
-      return {
-        ...question,
-        options: choices.map(choice => choice.text),
-        answer: choices.findIndex(choice => choice.index === question.answer)
-      };
-    });
-  }
-
-  function selectBalancedQuestions(questionList, count = CONFIG.questionsPerRound, random = Math.random) {
+  function prepareQuestions(questionList, random = Math.random) {
     if (!Array.isArray(questionList) || !questionList.length) throw new Error('Bank soal kosong.');
-    const grouped = {};
-    questionList.forEach(question => {
-      const key = question.operation || 'campuran';
-      (grouped[key] ||= []).push(question);
+    return shuffled(questionList, random).map(question => {
+      validateQuestion(question);
+      const correctChoice = question.options[question.answer];
+      const distractors = shuffled(question.options.filter((_, index) => index !== question.answer), random);
+      const choices = shuffled([correctChoice, ...distractors], random);
+      return { ...question, options: choices, answer: choices.indexOf(correctChoice) };
     });
-    const keys = Object.keys(grouped);
-    if (keys.length < 2) return prepareQuestions(questionList, random, count);
-
-    const base = Math.floor(count / keys.length);
-    let remainder = count % keys.length;
-    const selected = [];
-    shuffled(keys, random).forEach(key => {
-      const take = base + (remainder > 0 ? 1 : 0);
-      if (remainder > 0) remainder -= 1;
-      selected.push(...shuffled(grouped[key], random).slice(0, take));
-    });
-    return prepareQuestions(selected, random, count);
   }
 
   class Round {
-    constructor(questions, options = {}) {
-      this.questions = questions;
+    constructor(initialQuestions, options = {}) {
+      if (!Array.isArray(initialQuestions) || !initialQuestions.length) throw new Error('Ronde tidak memiliki soal.');
+      this.questions = initialQuestions.slice();
       this.index = 0;
       this.lives = options.lives ?? CONFIG.lives;
-      this.level = options.level || 'kelas-1-2';
-      const seconds = CONFIG.secondsPerQuestion[this.level] || CONFIG.defaultSecondsPerQuestion;
-      this.secondsPerQuestion = options.secondsPerQuestion ?? seconds;
+      this.phase = options.phase || 'A';
+      this.level = this.phase;
+      this.target = options.target ?? CONFIG.target;
+      this.secondsPerQuestion = options.secondsPerQuestion ?? CONFIG.secondsPerPhase[this.phase] ?? CONFIG.secondsPerPhase.A;
+      this.variantFactory = typeof options.variantFactory === 'function' ? options.variantFactory : null;
+      this.random = options.random || Math.random;
       this.correct = 0;
+      this._score = 0;
       this.answers = [];
+      this.slots = new Map();
+      this.usedQuestionKeys = new Set();
+      this.shownQuestionKeys = new Set();
+      this.presentedCount = 0;
+      this.nextInitialIndex = 0;
+      this.retryQueue = [];
       this.status = 'playing';
-      this.bonus = 0;
-      this.bonusDetails = { life: 0, speed: 0, total: 0 };
+      this.currentItem = null;
+
+      this.questions.forEach((question, index) => {
+        validateQuestion(question);
+        const slotId = question.slotId || 'slot-' + index;
+        const slot = { id: slotId, operation: question.operation, format: question.format || 'direct', negative: Boolean(question.negative), tier: question.tier || 1, question, attempts: [], complete: false, questionKeys: [] };
+        this.slots.set(slotId, slot);
+        this.usedQuestionKeys.add(question.uniqueKey || question.id || slotId);
+        this.questions[index] = { ...question, slotId, retry: false, retryNumber: 0 };
+      });
+      this.currentItem = this.questions[0];
+      this.shownQuestionKeys.add(this.currentItem.uniqueKey || this.currentItem.id);
+      this.nextInitialIndex = 1;
     }
 
-    get pointsPerQuestion() {
-      return this.questions.length ? Math.round(100 / this.questions.length) : 0;
-    }
-
-    get baseScore() {
-      return this.questions.length ? Math.round((this.correct / this.questions.length) * 100) : 0;
-    }
-
-    get score() { return this.baseScore + this.bonus; }
-
-    get percentage() {
-      return this.questions.length ? Math.round((this.correct / this.questions.length) * 100) : 0;
-    }
-
-    get isWon() {
-      return this.lives > 0 && this.percentage >= CONFIG.passingThresholdPercent;
-    }
-
-    calculateBonus(elapsedMs = 0) {
-      if (!this.isWon) {
-        this.bonus = 0;
-        this.bonusDetails = { life: 0, speed: 0, total: 0 };
-        return this.bonusDetails;
-      }
-      const lifeBonus = Math.max(0, this.lives) * CONFIG.lifeBonusPoints;
-      const allowedMs = this.questions.length * this.secondsPerQuestion * 1000;
-      const remainingRatio = allowedMs ? Math.max(0, allowedMs - elapsedMs) / allowedMs : 0;
-      const speedBonus = Math.round(remainingRatio * CONFIG.maxSpeedBonusPoints);
-      this.bonus = lifeBonus + speedBonus;
-      this.bonusDetails = { life: lifeBonus, speed: speedBonus, total: this.bonus };
-      return this.bonusDetails;
-    }
-
-    get question() { return this.questions[this.index]; }
+    get pointsPerQuestion() { return CONFIG.pointsPerCorrect; }
+    get baseScore() { return this._score; }
+    get score() { return Math.max(0, this._score); }
+    get attempts() { return this.answers.length; }
+    get wrongCount() { return this.answers.filter(result => !result.correct).length; }
+    get accuracy() { return this.attempts ? Math.round(this.correctAttempts / this.attempts * 100) : 0; }
+    get correctAttempts() { return this.answers.filter(result => result.correct).length; }
+    get percentage() { return this.target ? Math.round((this.correct / this.target) * 100) : 0; }
+    get isWon() { return this.lives > 0 && this.correct >= this.target; }
+    get question() { return this.currentItem; }
+    calculateBonus() { return { life: 0, speed: 0, total: 0 }; }
 
     answer(choice) {
-      if (this.status !== 'playing') return null;
-      const question = this.question;
+      if (this.status !== 'playing' || !this.currentItem) return null;
+      const question = this.currentItem;
       if (choice !== null && (!Number.isInteger(choice) || choice < 0 || choice >= question.options.length)) {
         throw new Error('Pilihan jawaban tidak valid.');
       }
       const correct = choice === question.answer;
-      if (correct) this.correct += 1;
-      else this.lives -= 1;
-      const result = { questionId: question.id, choice, correct, timedOut: choice === null };
-      this.answers.push(result);
+      const slot = this.slots.get(question.slotId);
+      const attempt = { questionId: question.id, question, choice, correct, timedOut: choice === null, slotId: question.slotId, retry: Boolean(question.retry) };
+      slot.attempts.push(attempt);
+      slot.questionKeys.push(question.uniqueKey || question.id);
+      this.answers.push(attempt);
+      this.presentedCount += 1;
+      if (correct) {
+        if (!slot.complete) { slot.complete = true; this.correct += 1; }
+        this._score += CONFIG.pointsPerCorrect;
+      } else {
+        this.lives -= 1;
+        this._score = Math.max(0, this._score - CONFIG.pointsPerWrong);
+        if (this.lives > 0 && this.variantFactory) {
+          const delay = randomInt(CONFIG.retryDelay.min, CONFIG.retryDelay.max, this.random);
+          this.retryQueue.push({ slot, due: this.presentedCount + delay, retryNumber: slot.attempts.length });
+        }
+      }
       this.status = 'feedback';
-      return result;
+      return attempt;
+    }
+
+    pickNextItem() {
+      const dueIndex = this.retryQueue.findIndex(item => item.due <= this.presentedCount);
+      if (dueIndex >= 0) {
+        const retry = this.retryQueue.splice(dueIndex, 1)[0];
+        const variant = this.variantFactory?.(retry.slot, retry.retryNumber, this.usedQuestionKeys);
+        if (variant) {
+          this.usedQuestionKeys.add(variant.uniqueKey || variant.id);
+          this.shownQuestionKeys.add(variant.uniqueKey || variant.id);
+          return { ...variant, slotId: retry.slot.id, retry: true, retryNumber: retry.retryNumber };
+        }
+      }
+      if (this.nextInitialIndex < this.questions.length) {
+        const next = this.questions[this.nextInitialIndex++];
+        this.shownQuestionKeys.add(next.uniqueKey || next.id);
+        return next;
+      }
+      if (this.retryQueue.length) {
+        const retry = this.retryQueue.shift();
+        const variant = this.variantFactory?.(retry.slot, retry.retryNumber, this.usedQuestionKeys);
+        if (variant) {
+          this.usedQuestionKeys.add(variant.uniqueKey || variant.id);
+          this.shownQuestionKeys.add(variant.uniqueKey || variant.id);
+          return { ...variant, slotId: retry.slot.id, retry: true, retryNumber: retry.retryNumber };
+        }
+      }
+      return null;
     }
 
     advance() {
       if (this.status !== 'feedback') return false;
-      if (this.lives <= 0 || this.index >= this.questions.length - 1) {
-        this.status = 'ended';
-        return false;
-      }
-      this.index += 1;
+      if (this.lives <= 0 || this.correct >= this.target) { this.status = 'ended'; return false; }
+      const next = this.pickNextItem();
+      if (!next) { this.status = 'ended'; return false; }
+      this.currentItem = next;
+      this.index = this.presentedCount;
       this.status = 'playing';
       return true;
     }
 
+    unresolvedSlots() {
+      return Array.from(this.slots.values()).filter(slot => !slot.complete).map(slot => ({
+        id: slot.id,
+        operation: slot.operation,
+        format: slot.format,
+        negative: slot.negative,
+        tier: slot.tier
+      }));
+    }
+
+    shownKeys() { return Array.from(this.shownQuestionKeys); }
+
     finish() { this.status = 'ended'; }
   }
 
-  const api = { CONFIG, shuffled, prepareQuestions, selectBalancedQuestions, Round };
+  const api = { CONFIG, PHASES, shuffled, randomInt, prepareQuestions, validateQuestion, Round };
   root.FrogEngine = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

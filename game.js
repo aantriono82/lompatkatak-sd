@@ -1,9 +1,10 @@
 (function () {
   'use strict';
 
-  const { CONFIG, prepareQuestions, selectBalancedQuestions, Round } = window.FrogEngine || {};
-  const labels = ['A', 'B', 'C', 'D'];
+  const { CONFIG, PHASES, Round } = window.FrogEngine || {};
+  const labels = ['A', 'B', 'C'];
   const levelInfo = window.FROG_LEVELS || {};
+  const questionFactory = window.FrogQuestions || {};
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const stage = document.querySelector('#split-stage');
   const template = document.querySelector('#board-template');
@@ -18,6 +19,36 @@
 
   function getStoredPlayerName() {
     try { return localStorage.getItem('ngarai_player_name') || ''; } catch (_) { return ''; }
+  }
+
+  const profileStorageKey = 'ngarai_math_profiles_v1';
+  function profileKey(name) { return String(name || '').trim().toLocaleLowerCase('id-ID').replace(/\s+/g, ' '); }
+  function readProfiles() {
+    try {
+      const value = JSON.parse(localStorage.getItem(profileStorageKey) || '{}');
+      return value && typeof value === 'object' ? value : {};
+    } catch (_) { return {}; }
+  }
+  function writeProfiles(profiles) {
+    try { localStorage.setItem(profileStorageKey, JSON.stringify(profiles)); } catch (_) {}
+  }
+  function getProfile(name, phase) {
+    const profiles = readProfiles();
+    const key = profileKey(name);
+    return profiles[key]?.[phase] || { lastRoundKeys: [], carry: [] };
+  }
+  function saveProfile(name, phase, data) {
+    const profiles = readProfiles();
+    const key = profileKey(name);
+    if (!key) return;
+    profiles[key] ||= {};
+    profiles[key][phase] = { lastRoundKeys: Array.from(new Set(data.lastRoundKeys || [])), carry: Array.isArray(data.carry) ? data.carry : [] };
+    writeProfiles(profiles);
+  }
+  function clearProfile(name) {
+    const profiles = readProfiles();
+    delete profiles[profileKey(name)];
+    writeProfiles(profiles);
   }
 
   function syncPlayerName(name) {
@@ -125,15 +156,21 @@
       this.root = root;
       this.team = team;
       this.label = team.label;
-      this.selectedLevel = 'kelas-1-2';
+      this.selectedLevel = 'A';
+      this.selectedSubject = 'matematika';
       this.round = null;
-      this.remainingMs = CONFIG.secondsPerQuestion[this.selectedLevel] * 1000;
+      this.remainingMs = (levelInfo[this.selectedLevel]?.seconds || CONFIG.secondsPerPhase.A) * 1000;
       this.elapsedMs = 0;
       this.lastFrame = 0;
       this.paused = false;
       this.session = 0;
       this.facingAngle = 0;
       this.isAnswering = false;
+      this.waypoints = [];
+      this.currentWaypoint = { x: 14, y: 84, worldX: 14, worldY: 84, label: 'START', start: true };
+      this.lastCorrectWaypoint = this.currentWaypoint;
+      this.routeDirection = 1;
+      this.cameraShiftY = 0;
       this.playerName = getStoredPlayerName();
 
       this.el = {
@@ -145,9 +182,12 @@
         questionIllustration: root.querySelector('.question-illustration'),
         questionText: root.querySelector('.question-box h2'),
         answerField: root.querySelector('.answer-field'),
+        routeLayer: root.querySelector('.route-layer'),
         buttons: Array.from(root.querySelectorAll('.answer-pad')),
+        homePlatform: root.querySelector('.home-platform'),
         frog: root.querySelector('.frog'),
         frogImg: root.querySelector('.frog > img'),
+        finishSign: root.querySelector('.finish-sign'),
         feedback: root.querySelector('.feedback'),
         timeGroup: root.querySelector('.time-group'),
         countdown: root.querySelector('.countdown'),
@@ -163,7 +203,7 @@
         startCountdown: root.querySelector('.start-countdown'),
         countdownStage: root.querySelector('.countdown-stage'),
         countdownNumber: root.querySelector('.countdown-number'),
-        levelButtons: Array.from(root.querySelectorAll('.level-option')),
+        levelButtons: Array.from(root.querySelectorAll('.phase-picker .level-option')),
         selectedLevelLabel: root.querySelector('.selected-level-label'),
         selectedLevelTime: root.querySelector('.selected-level-time'),
         selectedQuestionCount: root.querySelector('.selected-question-count'),
@@ -177,19 +217,23 @@
         resultScore: root.querySelector('.result-score'),
         resultScoreDetail: root.querySelector('.result-score-detail'),
         resultCorrect: root.querySelector('.result-correct'),
+        resultAttempts: root.querySelector('.result-attempts'),
+        resultAccuracy: root.querySelector('.result-accuracy'),
         resultTime: root.querySelector('.result-time'),
         retryButton: root.querySelector('.retry-button'),
+        resultHomeButton: root.querySelector('.result-home-button'),
         reportButton: root.querySelector('.report-button'),
         confetti: root.querySelector('.confetti'),
         startPlayerInput: root.querySelector('.start-player-input'),
         resultPlayerName: root.querySelector('.result-player-name'),
-        frogIdleSource: 'assets/frog-idle.svg',
-        frogJumpSource: 'assets/frog-jump.svg'
+        subjectButtons: Array.from(root.querySelectorAll('.subject-picker .subject-option')),
+        frogIdleSource: 'assets/frogi.png',
+        frogJumpSource: 'assets/frog-jump.png'
       };
 
       const required = ['pond', 'questionBox', 'questionCounter', 'questionText', 'answerField', 'frog', 'frogImg', 'feedback', 'timeGroup', 'countdown', 'timerProgress', 'secondsValue', 'elapsedValue', 'livesValue', 'scoreValue', 'settingsButton', 'startScreen', 'startButton', 'resultScreen', 'resultTitle', 'resultMessage', 'resultScore', 'resultCorrect', 'resultTime', 'retryButton', 'reportButton', 'startCountdown', 'countdownNumber'];
       const missing = required.filter(key => !this.el[key]);
-      if (missing.length || this.el.buttons.length !== 4 || !this.el.levelButtons.length) throw new Error('Elemen papan belum lengkap: ' + missing.join(', '));
+      if (missing.length || this.el.buttons.length !== 3 || !this.el.levelButtons.length) throw new Error('Elemen papan belum lengkap: ' + missing.join(', '));
 
       root.classList.add(team.className);
       this.el.startPlayerInput.value = this.playerName;
@@ -198,6 +242,10 @@
       this.el.levelButtons.forEach(button => {
         const icon = button.querySelector('.level-icon');
         if (icon && window.FrogIllustrations) icon.innerHTML = window.FrogIllustrations.getIllustration('icon-' + button.dataset.level);
+      });
+      this.el.subjectButtons.forEach(button => {
+        const icon = button.querySelector('.level-icon');
+        if (icon && window.FrogIllustrations) icon.innerHTML = window.FrogIllustrations.getIllustration('icon-subject-' + button.dataset.subject);
       });
       this.selectLevel(this.selectedLevel, false);
       this.updateStartDetails();
@@ -209,6 +257,7 @@
       this.el.levelButtons.forEach(button => button.addEventListener('click', () => this.selectLevel(button.dataset.level)));
       this.el.startButton.addEventListener('click', () => this.startGame(this.selectedLevel));
       this.el.retryButton.addEventListener('click', () => this.startGame(this.selectedLevel));
+      this.el.resultHomeButton?.addEventListener('click', () => this.goHome());
       this.el.homeButton.addEventListener('click', () => this.goHome());
       this.el.buttons.forEach((button, index) => button.addEventListener('click', () => { focusedBoard = this; initAudio(); void this.choose(index); }));
       this.el.settingsButton.addEventListener('click', () => openDialog(settingsDialog, this));
@@ -224,7 +273,7 @@
     isActive() { return Boolean(this.round && ['playing', 'feedback', 'countdown'].includes(this.round.status)); }
 
     selectLevel(level, shouldAnnounce = true) {
-      if (!levelInfo[level] || !window.FROG_QUESTIONS[level]) return false;
+      if (!levelInfo[level] || !questionFactory.createRoundQuestions) return false;
       this.selectedLevel = level;
       const info = levelInfo[level];
       this.el.levelButtons.forEach(button => {
@@ -232,9 +281,9 @@
         button.classList.toggle('active', active);
         button.setAttribute('aria-pressed', String(active));
       });
-      formatText(this.el.selectedLevelLabel, info.label);
+      formatText(this.el.selectedLevelLabel, info.shortLabel || info.label);
       formatText(this.el.selectedLevelTime, info.seconds);
-      formatText(this.el.sceneLevelLabel, info.label);
+      formatText(this.el.sceneLevelLabel, info.shortLabel || info.label);
       formatText(this.el.sceneTopic, info.description);
       this.updateStartDetails();
       if (shouldAnnounce) announce(this.label + ': ' + info.label + ' dipilih. ' + info.description + '.');
@@ -242,8 +291,7 @@
     }
 
     updateStartDetails() {
-      const count = Math.min((window.FROG_QUESTION_BANK || []).filter(question => question.tingkat === this.selectedLevel).length, CONFIG.questionsPerRound);
-      formatText(this.el.selectedQuestionCount, count);
+      formatText(this.el.selectedQuestionCount, CONFIG.target);
     }
 
     hud() {
@@ -263,18 +311,156 @@
 
     clearFrog() {
       this.el.frog.getAnimations?.({ subtree: true }).forEach(animation => animation.cancel());
-      this.el.frog.style.left = '';
-      this.el.frog.style.top = '';
-      this.el.frog.style.transform = '';
+      const waypoint = this.currentWaypoint || { x: 14, y: 84 };
+      this.el.frog.style.left = waypoint.x + '%';
+      this.el.frog.style.top = waypoint.y + '%';
+      this.el.frog.style.transform = 'translate(-50%,-55%) rotate(' + (this.facingAngle || 0) + 'deg)';
       this.el.frog.className = 'frog idle';
       this.el.frogImg.src = this.el.frogIdleSource;
+    }
+
+    resetRoute() {
+      this.el.routeLayer?.replaceChildren();
+      this.currentWaypoint = { x: 14, y: 84, worldX: 14, worldY: 84, label: 'START', start: true };
+      this.lastCorrectWaypoint = this.currentWaypoint;
+      this.waypoints = [this.currentWaypoint];
+      this.routeDirection = 1;
+      this.cameraShiftY = 0;
+      this.el.answerField.style.transform = '';
+      this.el.pond.style.backgroundPosition = 'center center';
+      this.el.homePlatform.style.left = this.currentWaypoint.x + '%';
+      this.el.homePlatform.style.top = '91%';
+    }
+
+    clampPosition(value, minimum, maximum) {
+      return Math.max(minimum, Math.min(maximum, value));
+    }
+
+    layoutAnswerPlatforms() {
+      if (!this.round || !this.el.buttons.length) return;
+      const origin = this.currentWaypoint || { x: 14, y: 84, worldX: 14, worldY: 84 };
+      const originWorldX = origin.worldX ?? origin.x;
+      const originWorldY = origin.worldY ?? origin.y;
+      const direction = this.routeDirection;
+      const jitter = () => (Math.random() * 8) - 4;
+      const offsets = [
+        { x: 25, y: -10 },
+        { x: 4, y: -29 },
+        { x: -22, y: -48 }
+      ];
+      const camera = Math.max(0, 56 - originWorldY);
+      origin.y = this.clampPosition(originWorldY + camera, 8, 82);
+      if (this.el.frog && !this.isAnswering) this.el.frog.style.top = origin.y + '%';
+      const positions = offsets.map((offset, index) => {
+        const worldX = this.clampPosition(originWorldX + direction * offset.x + jitter(), 12, 88);
+        const worldY = originWorldY + offset.y + jitter() * .25;
+        return { worldX, worldY, x: worldX, y: this.clampPosition(worldY + camera, 8, 82), index };
+      });
+      const xRange = Math.max(...positions.map(position => position.x)) - Math.min(...positions.map(position => position.x));
+      const sortedX = positions.map(position => position.x).sort((a, b) => a - b);
+      const minimumGap = Math.min(sortedX[1] - sortedX[0], sortedX[2] - sortedX[1]);
+      if (xRange < 18 || minimumGap < 16) {
+        const fallbackX = direction > 0 ? [20, 50, 80] : [80, 50, 20];
+        positions.forEach((position, index) => {
+          position.worldX = fallbackX[index];
+          position.x = fallbackX[index];
+        });
+      }
+      this.avoidSceneSigns(positions, camera);
+      this.el.routeLayer?.querySelectorAll('.route-platform').forEach(trail => {
+        const worldX = Number(trail.dataset.worldX);
+        const worldY = Number(trail.dataset.worldY);
+        if (Number.isFinite(worldX) && Number.isFinite(worldY)) {
+          trail.style.left = worldX + '%';
+          trail.style.top = this.clampPosition(worldY + camera, 8, 88) + '%';
+        }
+      });
+      this.activePlatformPositions = positions;
+      positions.forEach((position, index) => {
+        const button = this.el.buttons[index];
+        button.style.left = position.x + '%';
+        button.style.top = position.y + '%';
+      });
+      this.cameraShiftY = camera;
+      const backgroundCamera = this.clampPosition(camera, 0, 80);
+      this.el.pond.style.backgroundPosition = 'center ' + (50 + backgroundCamera * .7) + '%';
+    }
+
+    avoidSceneSigns(positions, camera) {
+      const pondRect = this.el.pond.getBoundingClientRect();
+      const signs = [this.root.querySelector('.level-sign'), this.el.finishSign].filter(Boolean).map(sign => {
+        const rect = sign.getBoundingClientRect();
+        return {
+          left: (rect.left - pondRect.left) / pondRect.width * 100,
+          right: (rect.right - pondRect.left) / pondRect.width * 100,
+          top: (rect.top - pondRect.top) / pondRect.height * 100,
+          bottom: (rect.bottom - pondRect.top) / pondRect.height * 100
+        };
+      });
+      const firstButton = this.el.buttons[0];
+      const platformRect = firstButton?.getBoundingClientRect();
+      const halfWidth = platformRect ? platformRect.width / pondRect.width * 50 : 9.5;
+      const halfHeight = platformRect ? platformRect.height / pondRect.height * 50 : 7.5;
+      const hitsSign = position => signs.some(sign =>
+        position.x + halfWidth > sign.left && position.x - halfWidth < sign.right &&
+        position.y + halfHeight > sign.top && position.y - halfHeight < sign.bottom
+      );
+      positions.forEach(position => {
+        if (!hitsSign(position)) return;
+        const candidates = [
+          { x: position.x + 28, y: position.y + 18 },
+          { x: position.x - 28, y: position.y + 18 },
+          { x: position.x, y: position.y + 24 },
+          { x: 50, y: 40 }
+        ];
+        const safe = candidates.find(candidate => {
+          candidate.x = this.clampPosition(candidate.x, 12, 88);
+          candidate.y = this.clampPosition(candidate.y, 8, 82);
+          return !hitsSign(candidate);
+        });
+        if (safe) {
+          position.x = safe.x;
+          position.worldX = safe.x;
+          position.y = safe.y;
+          position.worldY = safe.y - camera;
+        }
+      });
+
+      const overlapsPlatform = (left, right) =>
+        Math.abs(left.x - right.x) < halfWidth * 2 + 2 &&
+        Math.abs(left.y - right.y) < halfHeight * 2 + 2;
+      const safeSlots = [
+        [{ x: 20, y: 48 }, { x: 50, y: 28 }, { x: 80, y: 8 }],
+        [{ x: 80, y: 48 }, { x: 50, y: 28 }, { x: 20, y: 8 }]
+      ];
+      positions.forEach((position, index) => {
+        if (!positions.slice(0, index).some(previous => overlapsPlatform(position, previous))) return;
+        const candidates = safeSlots[index % safeSlots.length].concat(safeSlots[(index + 1) % safeSlots.length]);
+        const safe = candidates.find(candidate => {
+          candidate.x = this.clampPosition(candidate.x, 12, 88);
+          candidate.y = this.clampPosition(candidate.y, 8, 82);
+          return !hitsSign(candidate) && !positions.slice(0, index).some(previous => overlapsPlatform(candidate, previous));
+        });
+        if (safe) {
+          position.x = safe.x;
+          position.worldX = safe.x;
+          position.y = safe.y;
+          position.worldY = safe.y - camera;
+        }
+      });
+    }
+
+    preserveWaypoint(button, position, label) {
+      // Waypoint disimpan di state permainan, tetapi platform tahap lama
+      // sengaja tidak dirender agar pilihan soal sebelumnya tidak mengganggu.
     }
 
     showQuestion() {
       if (!this.round || this.round.status !== 'playing') return;
       const question = this.round.question;
       this.remainingMs = this.round.secondsPerQuestion * 1000;
-      this.el.questionCounter.textContent = 'Soal ' + (this.round.index + 1) + ' / ' + this.round.questions.length + ' · ' + levelInfo[this.round.level].label;
+      const retryLabel = question.retry ? ' · Latihan ulang' : '';
+      this.el.questionCounter.textContent = 'Soal ' + (this.round.presentedCount + 1) + ' · dikuasai ' + this.round.correct + ' / ' + this.round.target + ' · ' + levelInfo[this.round.phase].shortLabel + retryLabel;
       formatText(this.el.questionText, question.text);
 
       if (question.illustration && window.FrogIllustrations) {
@@ -289,26 +475,32 @@
         const exists = index < question.options.length;
         button.hidden = !exists;
         button.disabled = !exists;
-        button.className = 'answer-pad pad-' + ['a', 'b', 'c', 'd'][index];
+        button.className = 'answer-pad pad-' + ['a', 'b', 'c'][index];
         formatText(button.querySelector('.answer-text'), exists ? question.options[index] : '');
         formatText(button.querySelector('.answer-symbol'), '');
         button.setAttribute('aria-label', exists ? labels[index] + '. ' + cleanForSpeech(question.options[index]) : 'Pilihan tidak digunakan');
       });
       this.el.feedback.className = 'feedback';
       formatText(this.el.feedback, '');
+      this.el.routeLayer?.replaceChildren();
       this.clearFrog();
+      this.layoutAnswerPlatforms();
       this.hud();
       this.clock();
-      announce(this.label + ': soal ' + (this.round.index + 1) + '. ' + cleanForSpeech(question.text) + '. Pilihan: ' + question.options.map((option, index) => labels[index] + ', ' + cleanForSpeech(option)).join('; ') + '.');
+      announce(this.label + ': soal ' + (this.round.presentedCount + 1) + '. ' + cleanForSpeech(question.text) + '. Pilihan: ' + question.options.map((option, index) => labels[index] + ', ' + cleanForSpeech(option)).join('; ') + '.');
     }
 
     goHome() {
+      if (this.round && this.isActive() && this.playerName) {
+        saveProfile(this.playerName, this.round.phase, { lastRoundKeys: this.round.shownKeys(), carry: this.round.unresolvedSlots() });
+      }
       this.session += 1;
       this.paused = false;
       this.isAnswering = false;
       this.round = null;
       this.elapsedMs = 0;
       this.remainingMs = levelInfo[this.selectedLevel].seconds * 1000;
+      this.resetRoute();
       this.clearFrog();
       this.el.startCountdown.hidden = true;
       this.el.answerField.hidden = true;
@@ -328,20 +520,33 @@
     startGame(level = this.selectedLevel) {
       if (this.isAnswering) return false;
       if (!this.selectLevel(level, false)) level = this.selectedLevel;
-      syncPlayerName(this.el.startPlayerInput.value);
-      const bank = (window.FROG_QUESTION_BANK || []).filter(question => question.tingkat === level);
-      if (!bank.length) return false;
+      const playerName = String(this.el.startPlayerInput.value || '').trim().slice(0, 20);
+      if (!playerName) {
+        this.el.startPlayerInput.focus();
+        announce(this.label + ': tulis nama pemain terlebih dahulu.');
+        return false;
+      }
+      syncPlayerName(playerName);
+      const profile = getProfile(playerName, level);
+      const generated = questionFactory.createRoundQuestions(level, {
+        excludeKeys: profile.lastRoundKeys,
+        carry: profile.carry
+      });
       this.session += 1;
       const sessionId = this.session;
-      const roundQuestions = selectBalancedQuestions(bank, CONFIG.questionsPerRound);
-      this.round = new Round(roundQuestions, { level });
+      this.round = new Round(generated.questions, {
+        phase: level,
+        target: CONFIG.target,
+        secondsPerQuestion: levelInfo[level].seconds,
+        variantFactory: generated.variantFactory
+      });
       this.round.status = 'countdown';
       this.elapsedMs = 0;
       this.remainingMs = this.round.secondsPerQuestion * 1000;
       this.paused = false;
       this.isAnswering = false;
-      this.el.headingSuffix.textContent = ' · ' + levelInfo[level].label;
-      this.el.sceneLevelLabel.textContent = levelInfo[level].label;
+      this.el.headingSuffix.textContent = ' · Matematika · ' + (levelInfo[level].shortLabel || levelInfo[level].label);
+      this.el.sceneLevelLabel.textContent = levelInfo[level].shortLabel || levelInfo[level].label;
       this.el.sceneTopic.textContent = levelInfo[level].description;
       this.el.startScreen.hidden = true;
       this.el.resultScreen.hidden = true;
@@ -352,6 +557,7 @@
       this.el.settingsButton.hidden = false;
       this.el.buttons.forEach(button => { button.hidden = false; button.disabled = true; formatText(button.querySelector('.answer-text'), ''); });
       this.el.confetti.replaceChildren();
+      this.resetRoute();
       this.clearFrog();
       this.hud();
       focusedBoard = this;
@@ -450,17 +656,17 @@
       setTimeout(() => score.remove(), 1000);
     }
 
-    async jump(choice, sessionId) {
-      if (choice === null) return this.waitActive(120, sessionId);
+    async jumpToPoint(targetPoint, sessionId, options = {}) {
+      if (!targetPoint) return this.waitActive(120, sessionId);
+      const backward = Boolean(options.backward);
       const frog = this.el.frog;
       const pondRect = this.el.pond.getBoundingClientRect();
       const fromRect = frog.getBoundingClientRect();
-      const targetRect = this.el.buttons[choice].getBoundingClientRect();
       const fromX = (fromRect.left + fromRect.width / 2 - pondRect.left) / pondRect.width * 100;
       const fromY = (fromRect.top + fromRect.height * .55 - pondRect.top) / pondRect.height * 100;
-      const toX = (targetRect.left + targetRect.width / 2 - pondRect.left) / pondRect.width * 100;
-      const toY = (targetRect.top + targetRect.height * .52 - pondRect.top) / pondRect.height * 100;
-      const lift = Math.max(12, Math.abs(toY - fromY) * .38 + Math.abs(toX - fromX) * .08);
+      const toX = targetPoint.x;
+      const toY = targetPoint.y;
+      const lift = Math.max(12, Math.abs(toY - fromY) * (backward ? .46 : .38) + Math.abs(toX - fromX) * .08);
       this.lastLanding = { x: toX, y: toY };
       frog.classList.add('jumping');
       frog.classList.remove('idle');
@@ -474,7 +680,10 @@
           transform: 'translate(-50%,-55%) rotate(' + this.facingAngle + 'deg) scale(' + scaleX + ',' + scaleY + ')',
           offset: progress
         });
-        const animation = frog.animate([point(0, 0, 1, 1), point(.16, .3, .95, .94), point(.38, .82, 1.05, .88), point(.52, 1, 1.1, .84), point(.7, .72, 1.04, .9), point(.86, .2, 1.01, .96), point(1, 0, 1, 1)], { duration: 680, easing: 'linear', fill: 'forwards' });
+        const frames = backward
+          ? [point(0, 0, 1, 1), point(.16, .22, .94, .96), point(.38, .7, 1.04, .9), point(.54, 1, 1.1, .84), point(.72, .66, 1.02, .92), point(.88, .18, .98, .98), point(1, 0, 1, 1)]
+          : [point(0, 0, 1, 1), point(.16, .3, .95, .94), point(.38, .82, 1.05, .88), point(.52, 1, 1.1, .84), point(.7, .72, 1.04, .9), point(.86, .2, 1.01, .96), point(1, 0, 1, 1)];
+        const animation = frog.animate(frames, { duration: backward ? 760 : 680, easing: 'linear', fill: 'forwards' });
         try { await animation.finished; } catch (_) { return false; }
         if (sessionId !== this.session) return false;
         animation.cancel();
@@ -486,6 +695,14 @@
       this.el.frogImg.src = this.el.frogIdleSource;
       this.triggerShockwave(toX, toY);
       return sessionId === this.session;
+    }
+
+    async jump(choice, sessionId) {
+      if (choice === null) return this.waitActive(120, sessionId);
+      const button = this.el.buttons[choice];
+      const position = this.activePlatformPositions?.[choice];
+      if (!button || !position) return false;
+      return this.jumpToPoint({ x: position.x, y: position.y }, sessionId);
     }
 
     async choose(choice) {
@@ -500,21 +717,49 @@
       if (choice !== null && !await this.faceTarget(choice, sessionId)) { this.isAnswering = false; return false; }
       if (!await this.jump(choice, sessionId)) { this.isAnswering = false; return false; }
 
-      const landing = this.lastLanding || { x: 50, y: 82 };
+      const selectedPosition = choice === null ? null : this.activePlatformPositions?.[choice];
+      const landing = selectedPosition || (choice === null ? this.currentWaypoint : this.lastLanding) || { x: 14, y: 84 };
       this.el.buttons.forEach((button, index) => {
         if (index === question.answer) button.classList.add('correct');
         else if (index === choice) { button.classList.add('incorrect'); formatText(button.querySelector('.answer-symbol'), '×'); }
         else button.classList.add('muted');
       });
       this.hud();
-      const points = this.round.pointsPerQuestion;
-      const message = result.correct ? 'Hebat! +' + points + ' bintang' : result.timedOut ? 'Waktu habis. Coba soal berikutnya!' : 'Belum tepat. Tetap semangat!';
+      const points = result.correct ? CONFIG.pointsPerCorrect : CONFIG.pointsPerWrong;
+      const message = result.correct ? 'Hebat! +' + points + ' poin' : result.timedOut ? 'Waktu habis. −' + points + ' poin' : 'Belum tepat. −' + points + ' poin';
       this.el.feedback.textContent = message;
       this.el.feedback.className = 'feedback visible' + (result.correct ? '' : ' error');
-      if (result.correct) { correctSound(); this.triggerCorrectFeedback(landing.x, landing.y, points); }
-      else { wrongSound(); this.el.frog.classList.add('sink'); this.triggerWrongFeedback(landing.x, landing.y); }
+      if (result.correct) {
+        const waypoint = { x: landing.x, y: landing.y, worldX: landing.worldX ?? landing.x, worldY: landing.worldY ?? landing.y, label: labels[choice], questionId: question.id };
+        this.preserveWaypoint(this.el.buttons[choice], landing, labels[choice]);
+        this.currentWaypoint = waypoint;
+        this.lastCorrectWaypoint = waypoint;
+        this.waypoints.push(waypoint);
+        this.routeDirection *= -1;
+        correctSound();
+        this.triggerCorrectFeedback(landing.x, landing.y, points);
+        if (this.round.correct >= this.round.target && this.el.finishSign) {
+          const pondRect = this.el.pond.getBoundingClientRect();
+          const finishRect = this.el.finishSign.getBoundingClientRect();
+          const outPoint = {
+            x: this.clampPosition((finishRect.left + finishRect.width / 2 - pondRect.left) / pondRect.width * 100, 10, 90),
+            y: this.clampPosition((finishRect.top + finishRect.height + 22 - pondRect.top) / pondRect.height * 100, 14, 35),
+            label: 'OUT'
+          };
+          if (!await this.waitActive(180, sessionId) || !await this.jumpToPoint(outPoint, sessionId)) { this.isAnswering = false; return false; }
+          this.currentWaypoint = outPoint;
+        }
+      } else {
+        wrongSound();
+        this.el.frog.classList.add('sink');
+        this.triggerWrongFeedback(landing.x, landing.y);
+        if (!await this.waitActive(420, sessionId)) { this.isAnswering = false; return false; }
+        this.el.frog.classList.remove('sink');
+        if (choice !== null && !await this.jumpToPoint(this.lastCorrectWaypoint, sessionId, { backward: true })) { this.isAnswering = false; return false; }
+      }
+      this.hud();
       announce(this.label + ': ' + message + ' Jawaban yang benar: ' + cleanForSpeech(question.options[question.answer]) + '.');
-      if (!await this.waitActive(result.correct ? 950 : 1350, sessionId)) { this.isAnswering = false; return false; }
+      if (!await this.waitActive(result.correct ? 850 : 760, sessionId)) { this.isAnswering = false; return false; }
       if (this.round.advance()) { this.isAnswering = false; this.showQuestion(); }
       else { this.isAnswering = false; this.showResult(); }
       return true;
@@ -536,17 +781,24 @@
       this.el.resultPlayerName.textContent = this.playerName || 'Pemain';
       const bonus = this.round.calculateBonus(this.elapsedMs);
       const won = this.round.isWon;
-      this.el.resultTitle.textContent = won ? 'HEBAT!' : 'TETAP SEMANGAT!';
-      this.el.resultMessage.textContent = won ? (this.round.correct === this.round.questions.length ? 'Sempurna! Semua jawabanmu benar.' : 'Kamu berhasil sampai ke seberang!') : this.round.lives === 0 ? 'Nyawamu habis, tetapi kamu sudah belajar banyak.' : 'Ayo lihat pembahasan dan coba lagi.';
+      const gameOver = this.round.lives === 0;
+      saveProfile(this.playerName, this.round.phase, {
+        lastRoundKeys: this.round.shownKeys(),
+        carry: won ? [] : this.round.unresolvedSlots()
+      });
+      this.el.resultTitle.textContent = won ? 'HEBAT!' : gameOver ? 'GAME OVER' : 'TETAP SEMANGAT!';
+      this.el.resultMessage.textContent = won ? 'Kamu berhasil mencapai papan OUT!' : this.round.lives === 0 ? 'Nyawamu habis, tetapi kamu sudah belajar banyak.' : 'Slot yang belum dikuasai akan dilatih lagi pada ronde berikutnya.';
       this.el.resultIcon.textContent = won ? '🏆' : '🌱';
       this.el.resultScore.textContent = this.round.score;
-      this.el.resultCorrect.textContent = this.round.correct + ' / ' + this.round.questions.length;
+      this.el.resultCorrect.textContent = this.round.correct + ' / ' + this.round.target;
+      if (this.el.resultAttempts) this.el.resultAttempts.textContent = this.round.attempts;
+      if (this.el.resultAccuracy) this.el.resultAccuracy.textContent = this.round.accuracy + '%';
       this.el.resultTime.textContent = formatTime(this.elapsedMs);
       this.el.resultScoreDetail.hidden = false;
-      this.el.resultScoreDetail.textContent = won ? 'Dasar ' + this.round.baseScore + ' + bonus ' + bonus.total : 'Target selesai: 60% benar';
+      this.el.resultScoreDetail.textContent = won ? '10 poin per jawaban benar · 5 poin potongan per salah' : 'Target: ' + this.round.target + ' jawaban benar';
       this.makeConfetti(won);
       finishSound(won);
-      announce(this.label + ': selesai. ' + this.round.correct + ' dari ' + this.round.questions.length + ' jawaban benar.');
+      announce(this.label + ': selesai. ' + this.round.correct + ' dari target ' + this.round.target + ' jawaban benar.');
       this.el.resultTitle.focus({ preventScroll: true });
       this.hud();
       ensureLoop();
@@ -598,9 +850,9 @@
       return {
         status: this.round ? this.round.status : 'ready', level, levelLabel: levelInfo[level].label, paused: this.paused,
         score: this.round ? this.round.score : 0, lives: this.round ? this.round.lives : CONFIG.lives,
-        correct: this.round ? this.round.correct : 0, total: this.round ? this.round.questions.length : CONFIG.questionsPerRound,
+        correct: this.round ? this.round.correct : 0, total: this.round ? this.round.target : CONFIG.target,
         elapsed: formatTime(this.elapsedMs), secondsRemaining: Math.ceil(this.remainingMs / 1000),
-        question: this.isActive() ? { id: this.round.question.id, number: this.round.index + 1, text: this.round.question.text, options: this.round.question.options.map((text, index) => ({ index, label: labels[index], text })) } : null
+        question: this.isActive() ? { id: this.round.question.id, number: this.round.presentedCount + 1, text: this.round.question.text, options: this.round.question.options.map((text, index) => ({ index, label: labels[index], text })) } : null
       };
     }
   }
@@ -614,6 +866,7 @@
   const settingsDialog = document.querySelector('#settings-dialog');
   const helpDialog = document.querySelector('#help-dialog');
   const reportDialog = document.querySelector('#report-dialog');
+  const clearHistoryButton = document.querySelector('#clear-history-button');
   const dialogs = [settingsDialog, helpDialog, reportDialog];
   const pausedForDialog = new Map();
   let dialogBoard = null;
@@ -650,6 +903,22 @@
   document.querySelector('#help-done').addEventListener('click', () => closeDialog(helpDialog));
   document.querySelector('#close-report').addEventListener('click', () => closeDialog(reportDialog));
   document.querySelector('#sound-toggle').addEventListener('change', event => { sound = event.target.checked; if (sound) initAudio(); });
+  clearHistoryButton?.addEventListener('click', () => {
+    const board = dialogBoard || boards[0];
+    if (board?.isActive()) {
+      announce('Selesaikan atau tinggalkan permainan sebelum menghapus riwayat.');
+      return;
+    }
+    const name = board?.playerName || getStoredPlayerName();
+    if (!name) {
+      announce('Belum ada riwayat pemain yang bisa dihapus.');
+      return;
+    }
+    if (window.confirm('Hapus riwayat latihan ' + name + ' untuk semua fase?')) {
+      clearProfile(name);
+      announce('Riwayat latihan ' + name + ' sudah dihapus.');
+    }
+  });
   document.querySelector('#header-home-button').addEventListener('click', () => { dialogs.forEach(closeDialog); boards.forEach(board => board.goHome()); });
   document.querySelector('.brand').addEventListener('click', event => { event.preventDefault(); dialogs.forEach(closeDialog); boards.forEach(board => board.goHome()); });
   document.querySelector('#settings-home-button').addEventListener('click', () => { closeDialog(settingsDialog); (dialogBoard ? [dialogBoard] : boards).forEach(board => board.goHome()); });
@@ -678,7 +947,7 @@
     const board = focusedBoard?.isActive() ? focusedBoard : boards.find(item => item.isActive());
     if (!board || board.paused) return;
     const key = event.key.toLowerCase();
-    const index = { a: 0, b: 1, c: 2, d: 3, '1': 0, '2': 1, '3': 2, '4': 3 }[key];
+    const index = { a: 0, b: 1, c: 2, '1': 0, '2': 1, '3': 2 }[key];
     if (index !== undefined && board.round.status === 'playing') { event.preventDefault(); initAudio(); void board.choose(index); }
     else if (key === 'escape') { event.preventDefault(); openDialog(settingsDialog, board); }
   });
@@ -687,31 +956,45 @@
     if (!board?.round) return;
     const content = document.querySelector('#report-content');
     content.replaceChildren();
-    const total = board.round.questions.length;
+    const total = board.round.answers.length;
     const correct = board.round.correct;
+    const masteredSlots = Array.from(board.round.slots.values());
     const summary = document.createElement('div');
     summary.className = 'report-summary-card';
-    summary.innerHTML = `<div><span>BINTANG</span><b>${board.round.score}</b></div><div><span>BENAR</span><b>${correct} / ${total}</b></div><div><span>AKURASI</span><b>${Math.round(correct / total * 100)}%</b></div><div class="report-summary-badge ${board.round.isWon ? 'passed' : 'failed'}">${board.round.isWon ? 'Tuntas!' : 'Coba lagi'}</div>`;
+    summary.innerHTML = `<div><span>POIN</span><b>${board.round.score}</b></div><div><span>DIKUASAI</span><b>${correct} / ${board.round.target}</b></div><div><span>PERCOBAAN</span><b>${total}</b></div><div><span>AKURASI</span><b>${board.round.accuracy}%</b></div><div class="report-summary-badge ${board.round.isWon ? 'passed' : 'failed'}">${board.round.isWon ? 'Tuntas!' : 'Perlu latihan'}</div>`;
     content.append(summary);
     const filters = document.createElement('div');
     filters.className = 'report-filters';
-    const filterButtons = [['all', 'Semua Soal (' + total + ')'], ['wrong', 'Perlu latihan (' + (total - correct) + ')'], ['correct', 'Sudah benar (' + correct + ')']].map(([type, text], index) => {
+    const unresolved = masteredSlots.filter(slot => !slot.complete).length;
+    const filterButtons = [['all', 'Semua Slot (' + masteredSlots.length + ')'], ['wrong', 'Perlu latihan (' + unresolved + ')'], ['correct', 'Sudah dikuasai (' + (masteredSlots.length - unresolved) + ')']].map(([type, text], index) => {
       const button = document.createElement('button'); button.type = 'button'; button.className = 'report-filter-btn' + (index === 0 ? ' active' : ''); button.textContent = text; button.dataset.filter = type; filters.append(button); return button;
     });
     content.append(filters);
     const items = [];
-    board.round.questions.forEach((question, index) => {
-      const result = board.round.answers[index];
+    masteredSlots.forEach((slot, index) => {
+      const firstAttempt = slot.attempts[0];
+      const latestAttempt = slot.attempts[slot.attempts.length - 1];
+      const question = firstAttempt?.question || latestAttempt?.question || slot.question;
+      if (!question) return;
       const item = document.createElement('article');
       item.className = 'report-item';
-      item.dataset.status = result?.correct ? 'correct' : 'wrong';
+      item.dataset.status = slot.complete ? 'correct' : 'wrong';
       const art = document.createElement('div'); art.className = 'report-illustration'; art.innerHTML = window.FrogIllustrations?.getIllustration(question.illustration || 'canyon-badge') || '';
       const body = document.createElement('div'); body.className = 'report-body';
-      const title = document.createElement('h3'); title.innerHTML = `<span class="report-status ${result ? (result.correct ? '' : 'wrong') : 'unanswered'}">${result?.correct ? 'Benar' : result?.timedOut ? 'Waktu habis' : result ? 'Belum tepat' : 'Belum dijawab'}</span>`; title.append(document.createTextNode((index + 1) + '. ' + question.text));
-      const answer = document.createElement('p'); answer.textContent = 'Jawabanmu: ' + (result?.choice == null ? 'Tidak menjawab' : question.options[result.choice]);
-      const correctAnswer = document.createElement('p'); correctAnswer.innerHTML = '<strong>Jawaban benar: ' + question.options[question.answer] + '</strong>';
-      const explanation = document.createElement('p'); explanation.className = 'explanation'; explanation.textContent = question.explanation;
-      body.append(title, answer, correctAnswer, explanation); item.append(art, body); content.append(item); items.push(item);
+      const title = document.createElement('h3');
+      const statusText = slot.complete ? (slot.attempts.length > 1 ? 'Dikuasai · latihan ulang' : 'Dikuasai') : 'Perlu latihan';
+      title.innerHTML = `<span class="report-status ${slot.complete ? '' : 'wrong'}">${statusText}</span>`;
+      title.append(document.createTextNode((index + 1) + '. ' + question.text));
+      const attempts = document.createElement('div');
+      slot.attempts.forEach((attempt, attemptIndex) => {
+        const row = document.createElement('p');
+        row.textContent = 'Percobaan ' + (attemptIndex + 1) + ': ' + attempt.question.text + ' → ' + (attempt.choice == null ? 'Waktu habis' : attempt.question.options[attempt.choice]) + (attempt.correct ? ' · benar' : ' · belum tepat');
+        attempts.append(row);
+      });
+      const solvedAttempt = slot.attempts.find(attempt => attempt.correct) || latestAttempt || firstAttempt || { question };
+      const correctAnswer = document.createElement('p'); correctAnswer.innerHTML = '<strong>Jawaban benar: ' + solvedAttempt.question.options[solvedAttempt.question.answer] + '</strong>';
+      const explanation = document.createElement('p'); explanation.className = 'explanation'; explanation.textContent = solvedAttempt.question.explanation;
+      body.append(title, attempts, correctAnswer, explanation); item.append(art, body); content.append(item); items.push(item);
     });
     const applyFilter = type => { filterButtons.forEach(button => button.classList.toggle('active', button.dataset.filter === type)); items.forEach(item => { item.hidden = type !== 'all' && item.dataset.status !== type; }); };
     filterButtons.forEach(button => button.addEventListener('click', () => applyFilter(button.dataset.filter)));
