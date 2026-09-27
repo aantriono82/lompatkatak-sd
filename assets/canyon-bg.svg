@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#66c8e8"/><stop offset=".6" stop-color="#a8e0d2"/><stop offset="1" stop-color="#f4c982"/></linearGradient>
+    <linearGradient id="cliffLeft" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8d432e"/><stop offset=".46" stop-color="#c8753d"/><stop offset="1" stop-color="#6b372d"/></linearGradient>
+    <linearGradient id="cliffRight" x1="1" y1="0" x2="0" y2="1"><stop stop-color="#71372c"/><stop offset=".5" stop-color="#d17a3e"/><stop offset="1" stop-color="#8b442f"/></linearGradient>
+    <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#79a84e"/><stop offset="1" stop-color="#315b38"/></linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <g fill="#eef9e0" opacity=".72" filter="url(#soft)"><ellipse cx="750" cy="160" rx="215" ry="45"/><ellipse cx="1070" cy="230" rx="190" ry="34"/><ellipse cx="430" cy="210" rx="170" ry="30"/></g>
+  <path d="M0 380C190 305 320 350 465 405c120 46 172 64 255 40 120-36 190-107 325-97 189 14 310 99 555 12v540H0Z" fill="#4f8150" opacity=".7"/>
+  <path d="M0 0v518c120-23 206-59 285-141 71-74 85-170 172-206 61-25 116 2 152 71 25 49 41 122 70 180 25 50 63 90 112 102V0Z" fill="url(#cliffLeft)"/>
+  <path d="M1600 0v550c-141-42-230-117-285-215-53-92-75-154-165-172-62-12-111 17-139 95-22 61-37 135-80 194-30 40-68 63-107 70V0Z" fill="url(#cliffRight)"/>
+  <g fill="none" stroke="#f0ad63" stroke-width="13" opacity=".65"><path d="M30 302q150-54 277-8t249 9"/><path d="M8 378q159-49 291-6t263 9"/><path d="M1570 319q-150-49-272-8t-253 7"/><path d="M1590 399q-155-48-291-5t-242 10"/></g>
+  <path d="M0 432c124-12 211-30 289-100 83-74 97-138 166-170 40-18 69-2 99 40 35 49 55 139 98 201 24 35 54 63 92 81l-23 92H0Z" fill="url(#grass)"/>
+  <path d="M1600 445c-119-25-209-56-277-140-68-84-89-137-153-157-44-14-72 10-101 57-33 53-46 128-90 191-28 41-59 67-106 89l17 94h710Z" fill="url(#grass)"/>
+  <g fill="#214d35" stroke="#163c2d" stroke-width="5"><path d="m135 249 50-130 50 130h-24l43 68H116l43-68Z"/><path d="m270 205 43-113 43 113h-20l37 59H253l37-59Z"/><path d="m1410 247 49-129 49 129h-23l43 68h-138l43-68Z"/><path d="m1270 214 45-118 45 118h-20l37 61h-124l37-61Z"/></g>
+  <g stroke="#b9da70" stroke-width="5" stroke-linecap="round" opacity=".8"><path d="M38 520l13-23m8 26 11-29m82 8 10-28m18 31 9-23M1500 538l13-31m18 30 12-26m-158 18 11-28m16 31 12-23"/></g>
+  <g stroke="#2c6038" stroke-width="3" stroke-linecap="round"><path d="M86 535v-18m27 24v-21m1370 15v-21m28 27v-18"/></g>
+  <g fill="#fff1b1" stroke="#d98276" stroke-width="3"><circle cx="86" cy="513" r="6"/><circle cx="113" cy="537" r="6"/><circle cx="1480" cy="527" r="6"/><circle cx="1508" cy="510" r="6"/></g>
+  <path d="M0 650c225-42 354-34 522 39 150 65 319 78 522 8 198-68 338-84 556-27v230H0Z" fill="#274638"/>
+  <path d="M0 771c236-70 377-48 551 21 161 64 336 64 515-3 190-71 335-71 534-6v117H0Z" fill="#172f2d"/>
+</svg>

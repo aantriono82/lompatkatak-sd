@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <defs><linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#8fdc62"/><stop offset="1" stop-color="#34884d"/></linearGradient></defs>
+  <ellipse cx="90" cy="157" rx="48" ry="10" fill="#142f2c" opacity=".35"/>
+  <path d="M49 111c-16 7-27 24-25 37 13 8 29 2 42-13m65-24c16 7 27 24 25 37-13 8-29 2-42-13" fill="#4a9b50" stroke="#1d5037" stroke-width="5" stroke-linecap="round"/>
+  <path d="M50 84c-4 20 3 49 40 56 37-7 44-36 40-56Z" fill="url(#body)" stroke="#1d5037" stroke-width="5"/>
+  <path d="M66 121q24 18 48 0" fill="#f5e3a8" stroke="#2c7045" stroke-width="3"/>
+  <circle cx="61" cy="61" r="25" fill="#77c85c" stroke="#1d5037" stroke-width="5"/><circle cx="119" cy="61" r="25" fill="#77c85c" stroke="#1d5037" stroke-width="5"/>
+  <circle cx="66" cy="58" r="11" fill="#fff"/><circle cx="114" cy="58" r="11" fill="#fff"/><circle cx="68" cy="59" r="5" fill="#172e2c"/><circle cx="112" cy="59" r="5" fill="#172e2c"/>
+  <path d="M76 82q14 9 28 0" fill="none" stroke="#1d5037" stroke-width="4" stroke-linecap="round"/>
+  <path d="M53 96 37 84m90 12 16-12" fill="none" stroke="#1d5037" stroke-width="5" stroke-linecap="round"/>
+</svg>

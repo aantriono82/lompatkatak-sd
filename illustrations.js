@@ -1,310 +1,66 @@
-/**
- * Generator Ilustrasi Vektor SVG untuk Bangun Ruang Sisi Datar
- * Digunakan pada soal dan pembahasan game Lompat Katak.
- */
+/* Ilustrasi SVG ringan untuk soal dan pemilih tingkat kelas. */
 (function (root) {
   'use strict';
 
-  const SVG_STYLE = `
-    <defs>
-      <linearGradient id="geom-grad-top" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
-        <stop offset="100%" stop-color="#d7f5a2" stop-opacity="0.85"/>
-      </linearGradient>
-      <linearGradient id="geom-grad-front" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stop-color="#a4dc47" stop-opacity="0.9"/>
-        <stop offset="100%" stop-color="#72aa1b" stop-opacity="0.95"/>
-      </linearGradient>
-      <linearGradient id="geom-grad-side" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stop-color="#609712" stop-opacity="0.95"/>
-        <stop offset="100%" stop-color="#46730a" stop-opacity="0.95"/>
-      </linearGradient>
-      <linearGradient id="geom-grad-accent" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#ffd54f" stop-opacity="0.95"/>
-        <stop offset="100%" stop-color="#ff9800" stop-opacity="0.9"/>
-      </linearGradient>
-      <filter id="geom-shadow" x="-10%" y="-10%" width="120%" height="120%">
-        <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#142802" flood-opacity="0.3"/>
-      </filter>
-    </defs>
-  `;
+  const svg = (content, viewBox = '0 0 180 110') =>
+    `<svg class="mini-svg" viewBox="${viewBox}" role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">${content}</svg>`;
 
-  function wrapSvg(content, viewBox = '0 0 160 140') {
-    return `<svg class="geom-svg" viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">${SVG_STYLE}${content}</svg>`;
-  }
+  const common = `
+    <defs>
+      <linearGradient id="rock" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e2a05a"/><stop offset="1" stop-color="#a94f2d"/></linearGradient>
+      <linearGradient id="leaf" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#548c3e"/><stop offset="1" stop-color="#1d5132"/></linearGradient>
+    </defs>`;
 
   const illustrations = {
-    // 1. Kubus 3D dengan rusuk s = 4 cm atau 5 cm
-    'kubus-3d': () => wrapSvg(`
-      <g filter="url(#geom-shadow)" stroke="#233a05" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-        <!-- Hidden dashed edges -->
-        <line x1="35" y1="105" x2="35" y2="45" stroke="#48681e" stroke-width="1.8" stroke-dasharray="4 3" opacity="0.65"/>
-        <line x1="35" y1="105" x2="65" y2="125" stroke="#48681e" stroke-width="1.8" stroke-dasharray="4 3" opacity="0.65"/>
-        <line x1="35" y1="45" x2="65" y2="65" stroke="#48681e" stroke-width="1.8" stroke-dasharray="4 3" opacity="0.65"/>
-        
-        <!-- Faces -->
-        <!-- Side face -->
-        <polygon points="125,125 125,65 95,45 95,105" fill="url(#geom-grad-side)"/>
-        <!-- Front face -->
-        <polygon points="65,125 125,125 125,65 65,65" fill="url(#geom-grad-front)"/>
-        <!-- Top face -->
-        <polygon points="65,65 125,65 95,45 35,45" fill="url(#geom-grad-top)"/>
-      </g>
-      <!-- Label dimension -->
-      <g font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1b2e04">
-        <text x="95" y="137" text-anchor="middle">s</text>
-        <text x="133" y="100" text-anchor="start">s</text>
-        <text x="50" y="52" text-anchor="end">s</text>
-      </g>
-    `),
-
-    // 2. Jaring-jaring kubus (6 persegi)
-    'jaring-kubus': () => wrapSvg(`
-      <g stroke="#233a05" stroke-width="1.8" fill="url(#geom-grad-top)">
-        <!-- 6 squares: top, left, center, right, bottom1, bottom2 -->
-        <rect x="65" y="12" width="28" height="28" rx="2" fill="#ebffc6"/>
-        <rect x="37" y="40" width="28" height="28" rx="2" fill="#d5fa91"/>
-        <rect x="65" y="40" width="28" height="28" rx="2" fill="#b9f05a"/>
-        <rect x="93" y="40" width="28" height="28" rx="2" fill="#d5fa91"/>
-        <rect x="65" y="68" width="28" height="28" rx="2" fill="#a0e038"/>
-        <rect x="65" y="96" width="28" height="28" rx="2" fill="#88cf20"/>
-      </g>
-      <text x="79" y="133" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#203408" text-anchor="middle">6 sisi persegi kongruen</text>
-    `, '0 0 160 140'),
-
-    // 3. Kubus dengan Diagonal Ruang d = s√3
-    'kubus-diagonal': () => wrapSvg(`
-      <g filter="url(#geom-shadow)" stroke="#233a05" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-        <!-- Hidden back edges -->
-        <line x1="35" y1="105" x2="35" y2="45" stroke="#5d8227" stroke-width="1.5" stroke-dasharray="4 3"/>
-        <line x1="35" y1="105" x2="65" y2="125" stroke="#5d8227" stroke-width="1.5" stroke-dasharray="4 3"/>
-        <line x1="35" y1="45" x2="65" y2="65" stroke="#5d8227" stroke-width="1.5" stroke-dasharray="4 3"/>
-
-        <!-- Semi-transparent faces -->
-        <polygon points="125,125 125,65 95,45 95,105" fill="url(#geom-grad-side)" opacity="0.65"/>
-        <polygon points="65,125 125,125 125,65 65,65" fill="url(#geom-grad-front)" opacity="0.65"/>
-        <polygon points="65,65 125,65 95,45 35,45" fill="url(#geom-grad-top)" opacity="0.75"/>
-
-        <!-- Diagonal Ruang -->
-        <line x1="65" y1="125" x2="95" y2="45" stroke="#e62e05" stroke-width="3.2" stroke-linecap="round"/>
-        <circle cx="65" cy="125" r="4" fill="#e62e05" stroke="#fff" stroke-width="1.5"/>
-        <circle cx="95" cy="45" r="4" fill="#e62e05" stroke="#fff" stroke-width="1.5"/>
-      </g>
-      <!-- Label -->
-      <g font-family="Arial, sans-serif" font-size="11" font-weight="bold">
-        <text x="88" y="82" fill="#c41a00">d = s√3</text>
-        <text x="95" y="137" fill="#1b2e04" text-anchor="middle">s = 6 cm</text>
-      </g>
-    `),
-
-    // 4. Balok 3D Standar (p, l, t)
-    'balok-3d': () => wrapSvg(`
-      <g filter="url(#geom-shadow)" stroke="#233a05" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-        <!-- Hidden dashed edges -->
-        <line x1="25" y1="110" x2="25" y2="55" stroke="#567923" stroke-width="1.6" stroke-dasharray="4 3"/>
-        <line x1="25" y1="110" x2="55" y2="125" stroke="#567923" stroke-width="1.6" stroke-dasharray="4 3"/>
-        <line x1="25" y1="55" x2="55" y2="70" stroke="#567923" stroke-width="1.6" stroke-dasharray="4 3"/>
-
-        <!-- Faces -->
-        <polygon points="135,125 135,70 105,55 105,110" fill="url(#geom-grad-side)"/>
-        <polygon points="55,125 135,125 135,70 55,70" fill="url(#geom-grad-front)"/>
-        <polygon points="55,70 135,70 105,55 25,55" fill="url(#geom-grad-top)"/>
-      </g>
-      <!-- Dimensions -->
-      <g font-family="Arial, sans-serif" font-size="10.5" font-weight="bold" fill="#1b2e04">
-        <text x="95" y="138" text-anchor="middle">panjang (p)</text>
-        <text x="140" y="102" text-anchor="start">t</text>
-        <text x="40" y="60" text-anchor="end">lebar (l)</text>
-      </g>
-    `),
-
-    // 5. Balok dengan Diagonal Ruang (d = √(p² + l² + t²))
-    'balok-diagonal': () => wrapSvg(`
-      <g filter="url(#geom-shadow)" stroke="#233a05" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-        <!-- Hidden lines -->
-        <line x1="25" y1="115" x2="25" y2="50" stroke="#567923" stroke-width="1.5" stroke-dasharray="4 3"/>
-        <line x1="25" y1="115" x2="60" y2="128" stroke="#567923" stroke-width="1.5" stroke-dasharray="4 3"/>
-        <line x1="25" y1="50" x2="60" y2="63" stroke="#567923" stroke-width="1.5" stroke-dasharray="4 3"/>
-
-        <!-- Faces semi-transparent -->
-        <polygon points="135,128 135,63 100,50 100,115" fill="url(#geom-grad-side)" opacity="0.6"/>
-        <polygon points="60,128 135,128 135,63 60,63" fill="url(#geom-grad-front)" opacity="0.6"/>
-        <polygon points="60,63 135,63 100,50 25,50" fill="url(#geom-grad-top)" opacity="0.7"/>
-
-        <!-- Diagonal ruang merah -->
-        <line x1="60" y1="128" x2="100" y2="50" stroke="#d82200" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="60" cy="128" r="3.5" fill="#d82200" stroke="#fff" stroke-width="1.5"/>
-        <circle cx="100" cy="50" r="3.5" fill="#d82200" stroke="#fff" stroke-width="1.5"/>
-      </g>
-      <!-- Labels -->
-      <g font-family="Arial, sans-serif" font-size="10" font-weight="bold">
-        <text x="98" y="139" fill="#1b2e04" text-anchor="middle">p = 6</text>
-        <text x="140" y="98" fill="#1b2e04">t = 24</text>
-        <text x="38" y="55" fill="#1b2e04" text-anchor="end">l = 8</text>
-        <text x="86" y="86" fill="#c01700">d = 26 cm</text>
-      </g>
-    `),
-
-    // 6. Limas Segi Empat (Volume & Rusuk: alas + tinggi t)
-    'limas-3d': () => wrapSvg(`
-      <g filter="url(#geom-shadow)" stroke="#233a05" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-        <!-- Alas persegi perspektif -->
-        <line x1="45" y1="100" x2="80" y2="85" stroke="#5c7e26" stroke-width="1.6" stroke-dasharray="4 3"/>
-        <line x1="80" y1="85" x2="135" y2="92" stroke="#5c7e26" stroke-width="1.6" stroke-dasharray="4 3"/>
-        <!-- Height line (tinggi limas t) -->
-        <line x1="85" y1="20" x2="85" y2="102" stroke="#d82200" stroke-width="2" stroke-dasharray="3 3"/>
-        <polygon points="85,102 85,96 91,96 91,102" fill="none" stroke="#d82200" stroke-width="1.2"/>
-
-        <!-- Faces -->
-        <polygon points="85,20 25,115 100,123" fill="url(#geom-grad-front)" opacity="0.85"/>
-        <polygon points="85,20 100,123 135,92" fill="url(#geom-grad-side)" opacity="0.9"/>
-      </g>
-      <!-- Labels -->
-      <g font-family="Arial, sans-serif" font-size="10.5" font-weight="bold">
-        <text x="63" y="132" fill="#1b2e04" text-anchor="middle">sisi alas (s)</text>
-        <text x="91" y="58" fill="#c41a00">tinggi (t)</text>
-        <text x="85" y="15" fill="#1b2e04" text-anchor="middle">Puncak</text>
-      </g>
-    `),
-
-    // 7. Limas Segi Empat dengan Apotema / Tinggi Sisi Tegak
-    'limas-slant': () => wrapSvg(`
-      <g filter="url(#geom-shadow)" stroke="#233a05" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-        <!-- Base and faces -->
-        <polygon points="80,18 20,115 100,122" fill="url(#geom-grad-front)" opacity="0.85"/>
-        <polygon points="80,18 100,122 140,94" fill="url(#geom-grad-side)" opacity="0.9"/>
-
-        <!-- Slant height (tinggi sisi tegak / apotema pada segitiga depan) -->
-        <line x1="80" y1="18" x2="60" y2="118.5" stroke="#ffd600" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="60" cy="118.5" r="3" fill="#ffd600" stroke="#233a05"/>
-        <path d="M 57,105 L 67,106.5 L 70,119.5" fill="none" stroke="#ffffff" stroke-width="1.5"/>
-      </g>
-      <!-- Labels -->
-      <g font-family="Arial, sans-serif" font-size="10" font-weight="bold">
-        <text x="60" y="134" fill="#1b2e04" text-anchor="middle">s = 12 cm</text>
-        <text x="77" y="65" fill="#8f5b00">t sisi tegak = 10 cm</text>
-      </g>
-    `),
-
-    // 8. Prisma Segitiga Siku-siku
-    'prisma-segitiga': () => wrapSvg(`
-      <g filter="url(#geom-shadow)" stroke="#233a05" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-        <!-- Hidden base lines -->
-        <line x1="30" y1="110" x2="30" y2="40" stroke="#5c7e26" stroke-width="1.6" stroke-dasharray="4 3"/>
-        <line x1="30" y1="110" x2="75" y2="125" stroke="#5c7e26" stroke-width="1.6" stroke-dasharray="4 3"/>
-
-        <!-- Front & side rectangular faces -->
-        <polygon points="75,125 135,80 135,20 75,65" fill="url(#geom-grad-front)"/>
-        <!-- Top triangle -->
-        <polygon points="30,40 75,65 135,20" fill="url(#geom-grad-top)"/>
-        <!-- Bottom triangle (visible edge) -->
-        <line x1="75" y1="125" x2="135" y2="80" stroke="#233a05" stroke-width="2"/>
-        <line x1="30" y1="110" x2="135" y2="80" stroke="#5c7e26" stroke-width="1.5" stroke-dasharray="4 3"/>
-
-        <!-- Right angle mark at top triangle -->
-        <polygon points="40,45 46,55 36,60" fill="none" stroke="#233a05" stroke-width="1.2"/>
-      </g>
-      <!-- Labels -->
-      <g font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#1b2e04">
-        <text x="50" y="63" text-anchor="end">9 cm</text>
-        <text x="110" y="38" text-anchor="start">12 cm</text>
-        <text x="115" y="112" text-anchor="start">panjang = 10 cm</text>
-      </g>
-    `),
-
-    // 9. Prisma Trapesium
-    'prisma-trapesium': () => wrapSvg(`
-      <g filter="url(#geom-shadow)" stroke="#233a05" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-        <!-- Front trapezoid -->
-        <polygon points="55,70 95,70 115,115 35,115" fill="url(#geom-grad-front)"/>
-        <!-- Top face extrusion -->
-        <polygon points="55,70 95,70 120,40 80,40" fill="url(#geom-grad-top)"/>
-        <!-- Right slope face -->
-        <polygon points="95,70 115,115 140,85 120,40" fill="url(#geom-grad-side)"/>
-      </g>
-      <!-- Dimensions -->
-      <g font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" fill="#1b2e04">
-        <text x="75" y="64" text-anchor="middle">8 cm</text>
-        <text x="75" y="128" text-anchor="middle">14 cm</text>
-        <text x="135" y="60" text-anchor="start">t prisma = 10 cm</text>
-      </g>
-    `),
-
-    // 10. Pemotongan Kubus menjadi 8 Kubus Kecil (2x2x2)
-    'kubus-potong-8': () => wrapSvg(`
-      <g filter="url(#geom-shadow)" stroke="#233a05" stroke-width="1.8" stroke-linejoin="round">
-        <!-- Top face with grid 2x2 -->
-        <polygon points="65,65 125,65 95,35 35,35" fill="url(#geom-grad-top)"/>
-        <line x1="50" y1="50" x2="110" y2="50" stroke="#233a05" stroke-width="1.8"/>
-        <line x1="95" y1="65" x2="65" y2="35" stroke="#233a05" stroke-width="1.8"/>
-
-        <!-- Front face with grid 2x2 -->
-        <polygon points="65,125 125,125 125,65 65,65" fill="url(#geom-grad-front)"/>
-        <line x1="65" y1="95" x2="125" y2="95" stroke="#233a05" stroke-width="1.8"/>
-        <line x1="95" y1="125" x2="95" y2="65" stroke="#233a05" stroke-width="1.8"/>
-
-        <!-- Side face with grid 2x2 -->
-        <polygon points="125,125 125,65 95,35 95,95" fill="url(#geom-grad-side)"/>
-        <line x1="125" y1="95" x2="95" y2="65" stroke="#233a05" stroke-width="1.8"/>
-        <line x1="110" y1="110" x2="110" y2="50" stroke="#233a05" stroke-width="1.8"/>
-      </g>
-      <text x="80" y="137" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#1b2e04" text-anchor="middle">8 kubus kecil (s = 6 cm)</text>
-    `),
-
-    'icon-kubus': () => wrapSvg(`
-  <g stroke="#233a05" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" filter="url(#geom-shadow)">
-    <polygon points="35,35 75,35 95,18 55,18" fill="url(#geom-grad-top)"/>
-    <polygon points="35,35 75,35 75,75 35,75" fill="url(#geom-grad-front)"/>
-    <polygon points="75,35 95,18 95,58 75,75" fill="url(#geom-grad-side)"/>
-  </g>
-`, '0 0 120 100'),
-
-    'icon-balok': () => wrapSvg(`
-  <g stroke="#233a05" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" filter="url(#geom-shadow)">
-    <polygon points="15,45 85,45 100,30 30,30" fill="url(#geom-grad-top)"/>
-    <polygon points="15,45 85,45 85,72 15,72" fill="url(#geom-grad-front)"/>
-    <polygon points="85,45 100,30 100,57 85,72" fill="url(#geom-grad-side)"/>
-  </g>
-`, '0 0 120 100'),
-
-    'icon-prisma': () => wrapSvg(`
-  <g stroke="#233a05" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" filter="url(#geom-shadow)">
-    <polygon points="25,30 70,80 92,66 47,16" fill="url(#geom-grad-top)"/>
-    <polygon points="25,80 25,30 47,16 47,66" fill="url(#geom-grad-side)"/>
-    <polygon points="25,80 25,30 70,80" fill="url(#geom-grad-front)"/>
-  </g>
-`, '0 0 120 100'),
-
-    'icon-limas': () => wrapSvg(`
-  <g stroke="#233a05" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" filter="url(#geom-shadow)">
-    <polygon points="60,15 15,68 45,90" fill="url(#geom-grad-front)"/>
-    <polygon points="60,15 45,90 95,60" fill="url(#geom-grad-side)"/>
-  </g>
-`, '0 0 120 100'),
-
-    'icon-semua': () => wrapSvg(`
-  <g stroke="#233a05" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" filter="url(#geom-shadow)">
-    <!-- Mini Cube on left -->
-    <polygon points="20,44 48,44 62,32 34,32" fill="url(#geom-grad-top)"/>
-    <polygon points="20,44 48,44 48,72 20,72" fill="url(#geom-grad-front)"/>
-    <polygon points="48,44 62,32 62,60 48,72" fill="url(#geom-grad-side)"/>
-    <!-- Mini Pyramid on right -->
-    <polygon points="90,24 64,68 84,82" fill="url(#geom-grad-accent)"/>
-    <polygon points="90,24 84,82 108,62" fill="url(#geom-grad-side)"/>
-  </g>
-`, '0 0 120 100')
+    'counting-pebbles': () => svg(`${common}
+      <path d="M14 92c34-9 73-8 151 0" fill="none" stroke="#3e5936" stroke-width="7" stroke-linecap="round"/>
+      <g fill="#c7874d" stroke="#703e2d" stroke-width="2"><circle cx="36" cy="74" r="12"/><circle cx="68" cy="62" r="12"/><circle cx="100" cy="76" r="12"/><circle cx="132" cy="60" r="12"/><circle cx="153" cy="80" r="10"/></g>
+      <g fill="#f5c66c"><circle cx="32" cy="70" r="3"/><circle cx="64" cy="58" r="3"/><circle cx="96" cy="72" r="3"/><circle cx="128" cy="56" r="3"/><circle cx="150" cy="76" r="3"/></g>`),
+    'number-line': () => svg(`${common}
+      <path d="M20 70h140" stroke="#75432d" stroke-width="7" stroke-linecap="round"/>
+      <path d="M30 57v26m24-26v26m24-26v26m24-26v26m24-26v26m24-26v26" stroke="#f8dda1" stroke-width="3"/>
+      <path d="m54 38 8 9-8 9m48-18 8 9-8 9" fill="none" stroke="#ee8d42" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="54" cy="70" r="8" fill="#4f963e" stroke="#204f32" stroke-width="3"/><circle cx="102" cy="70" r="8" fill="#f2b657" stroke="#8a4a2c" stroke-width="3"/>`),
+    'wildflowers': () => svg(`${common}
+      <path d="M14 92c25-20 52-8 76-17 28-10 45 6 76 11v24H14Z" fill="#3d723d"/>
+      <path d="M45 94V58m33 35V49m43 45V60m32 33V50" stroke="#2c673b" stroke-width="3"/>
+      <g fill="#ffe889" stroke="#fff5c9" stroke-width="3"><circle cx="45" cy="55" r="5"/><circle cx="78" cy="46" r="5"/><circle cx="121" cy="57" r="5"/><circle cx="153" cy="47" r="5"/></g>
+      <g fill="#de85a2"><circle cx="45" cy="55" r="2"/><circle cx="78" cy="46" r="2"/><circle cx="121" cy="57" r="2"/><circle cx="153" cy="47" r="2"/></g>`),
+    'groups': () => svg(`${common}
+      <g fill="#f5c768" stroke="#87472d" stroke-width="3"><rect x="18" y="26" width="55" height="55" rx="12"/><rect x="88" y="26" width="55" height="55" rx="12"/></g>
+      <g fill="#4f923f" stroke="#245234" stroke-width="2"><circle cx="35" cy="43" r="7"/><circle cx="57" cy="43" r="7"/><circle cx="35" cy="65" r="7"/><circle cx="57" cy="65" r="7"/><circle cx="105" cy="43" r="7"/><circle cx="127" cy="43" r="7"/><circle cx="105" cy="65" r="7"/><circle cx="127" cy="65" r="7"/></g>`),
+    'sharing': () => svg(`${common}
+      <path d="M90 17v78M32 56h116" stroke="#bd7441" stroke-width="5"/>
+      <g fill="#5b9c4d" stroke="#244f32" stroke-width="2"><circle cx="52" cy="37" r="9"/><circle cx="126" cy="37" r="9"/><circle cx="52" cy="78" r="9"/><circle cx="126" cy="78" r="9"/></g>
+      <path d="M78 56h24" stroke="#f8dd99" stroke-width="4" stroke-linecap="round"/>`),
+    'place-value': () => svg(`${common}
+      <path d="M24 86h132" stroke="#70402d" stroke-width="6" stroke-linecap="round"/>
+      <g stroke="#74422d" stroke-width="3"><rect x="30" y="45" width="27" height="41" rx="4" fill="#efb35f"/><rect x="67" y="31" width="27" height="55" rx="4" fill="#d98643"/><rect x="104" y="18" width="27" height="68" rx="4" fill="#a95d39"/></g>
+      <path d="M39 55h9m-9 10h9m-9 10h9m29-33h9m-9 10h9m-9 10h9m28-22h9m-9 10h9m-9 10h9" stroke="#ffe6a3" stroke-width="3" stroke-linecap="round"/>`),
+    'canyon-birds': () => svg(`${common}
+      <path d="M0 96 30 53l22 21 30-46 25 34 26-29 47 63Z" fill="url(#rock)" stroke="#703b2d" stroke-width="3"/>
+      <path d="M25 33q10-12 20 0q10-12 20 0M92 26q10-12 20 0q10-12 20 0" fill="none" stroke="#294d37" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="44" cy="34" r="3" fill="#294d37"/><circle cx="111" cy="27" r="3" fill="#294d37"/>`),
+    'canyon-books': () => svg(`${common}
+      <path d="M24 88h132" stroke="#70402d" stroke-width="7" stroke-linecap="round"/>
+      <g stroke="#70402d" stroke-width="3"><rect x="39" y="35" width="28" height="53" rx="3" fill="#e36d44" transform="rotate(-7 39 35)"/><rect x="68" y="28" width="28" height="60" rx="3" fill="#efbd57" transform="rotate(3 68 28)"/><rect x="98" y="36" width="28" height="52" rx="3" fill="#5d9b5b" transform="rotate(9 98 36)"/></g>
+      <path d="M45 46h15m-16 9h15m29-15h16m-17 9h17m13 4h16m-15 9h16" stroke="#fff0b5" stroke-width="3" stroke-linecap="round"/>`),
+    'jump-route': () => svg(`${common}
+      <path d="M18 86c27-44 50 36 78-15 19-34 33 16 66-30" fill="none" stroke="#f2bf68" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 12"/>
+      <g fill="#8d553a" stroke="#55352b" stroke-width="3"><path d="m21 80 20-7 15 12-20 11Z"/><path d="m84 58 20-7 15 12-20 11Z"/><path d="m145 34 20-7 15 12-20 11Z"/></g>
+      <circle cx="47" cy="70" r="7" fill="#5da34b" stroke="#245234" stroke-width="3"/>`),
+    'canyon-badge': () => svg(`${common}<path d="M8 102 45 32l23 20 22-45 24 46 22-21 36 70Z" fill="url(#rock)"/><circle cx="90" cy="35" r="15" fill="#f6c96c" stroke="#8c4b32" stroke-width="3"/><path d="M83 35h14M90 28v14" stroke="#8c4b32" stroke-width="3"/>`),
+    'icon-kelas-1-2': () => svg(`<circle cx="90" cy="55" r="41" fill="#f4c66e" stroke="#7d4a32" stroke-width="4"/><text x="90" y="66" text-anchor="middle" font-size="30" font-weight="800" fill="#5c352a">1–2</text>`),
+    'icon-kelas-3-4': () => svg(`<circle cx="90" cy="55" r="41" fill="#d98b50" stroke="#633b2d" stroke-width="4"/><text x="90" y="66" text-anchor="middle" font-size="30" font-weight="800" fill="#fff1bd">3–4</text>`),
+    'icon-kelas-5-6': () => svg(`<circle cx="90" cy="55" r="41" fill="#6d9d59" stroke="#244f38" stroke-width="4"/><text x="90" y="66" text-anchor="middle" font-size="30" font-weight="800" fill="#fff4c4">5–6</text>`)
   };
 
-  function getIllustration(id) {
-    if (!id || !illustrations[id]) return '';
-    try {
-      return illustrations[id]();
-    } catch (_) {
-      return '';
+  const api = {
+    getIllustration(name) {
+      return illustrations[name] ? illustrations[name]() : '';
     }
-  }
+  };
 
-  const api = { illustrations, getIllustration };
   root.FrogIllustrations = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
