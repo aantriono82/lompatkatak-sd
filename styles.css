@@ -190,7 +190,9 @@ button:disabled { cursor: default; }
 .start-countdown.fade-out { animation: fade-out .3s ease-out forwards; }
 
 .game-footer { max-width: 1560px; width: 100%; padding: 8px 4px 0; margin: auto; color: #b9d2ac; text-align: center; font-size: 12px; }
-.game-footer span { color: #f0cb70; }
+.game-footer a { color: #f0cb70; font-weight: 800; text-underline-offset: 2px; }
+.game-footer a:hover { color: #ffe18a; }
+.game-footer .footer-heart { display: inline-block; color: #f15f63; text-shadow: 0 1px 1px #6f2934; animation: heart-vibrate .8s ease-in-out infinite; }
 .accessibility-status { position: fixed; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .load-error { padding: 40px; color: #fff; text-align: center; }
 
@@ -244,6 +246,7 @@ dialog .secondary-button { width: 100%; margin-top: 10px; color: #32513d; border
 @keyframes confetti-fall { from { transform: translateY(-10px) rotate(0); } to { transform: translateY(700px) rotate(500deg); } }
 @keyframes count-pop { 0% { transform: scale(.55); opacity: .2; } 70% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
 @keyframes fade-out { to { opacity: 0; } }
+@keyframes heart-vibrate { 0%, 100% { transform: scale(1) rotate(0); } 20% { transform: scale(1.12) rotate(-7deg); } 40% { transform: scale(1.18) rotate(7deg); } 60% { transform: scale(1.08) rotate(-4deg); } 80% { transform: scale(1.12) rotate(4deg); } }
 
 @media (min-width: 900px) {
   .page { height: calc(100dvh - clamp(56px, 5vw, 78px)); min-height: 0; }
