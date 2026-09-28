@@ -266,17 +266,17 @@ dialog .secondary-button { width: 100%; margin-top: 10px; color: #32513d; border
 }
 
 @media (min-width: 821px) and (max-height: 1100px) {
-  .start-screen, .result-screen { justify-content: flex-start; overflow-y: auto; padding-top: 16px; padding-bottom: 22px; }
-  .start-mascot { width: 92px; height: 58px; }
+  .start-screen, .result-screen { justify-content: flex-start; overflow-y: auto; padding-top: 8px; padding-bottom: 18px; }
+  .start-mascot { width: 105px; height: 68px; }
   .start-screen h2 { font-size: clamp(21px, 2.5cqw, 34px); }
   .start-intro { margin: 5px 0 7px; }
   .level-picker { gap: 7px; margin: 3px 0 8px; }
-  .level-option { min-height: 67px; padding: 4px 6px; }
-  .level-icon { width: 32px; height: 22px; }
+  .level-option { min-height: 72px; padding: 5px 6px; }
+  .level-icon { width: 34px; height: 24px; }
   .player-name-card { margin-bottom: 8px; }
-  .player-name-input { height: 38px; }
-  .primary-button { min-height: 40px; padding: 7px 22px; }
-  .start-details { margin-top: 6px; }
+  .player-name-input { height: 40px; }
+  .primary-button { min-height: 44px; padding: 8px 23px; }
+  .start-details { margin-top: 7px; }
 }
 
 @media (max-width: 560px) {
