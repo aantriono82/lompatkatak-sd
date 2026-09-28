@@ -98,13 +98,18 @@
   let croakAudioBuffer = null;
   let croakAudioLoading = false;
   const croakAudio = new Audio('assets/frog-croak.mp3');
-  croakAudio.preload = 'auto';
+  croakAudio.preload = 'none';
   croakAudio.volume = .65;
 
   function loadCroakAudioBuffer() {
-    if (!audioContext || croakAudioBuffer || croakAudioLoading) return;
+    // fetch(file://...) is blocked by the browser's CORS rules. The Audio
+    // element fallback below still works when the game is opened directly.
+    if (window.location.protocol === 'file:' || !audioContext || croakAudioBuffer || croakAudioLoading) return;
     croakAudioLoading = true;
-    fetch('assets/frog-croak.mp3').then(response => response.arrayBuffer()).then(buffer => audioContext.decodeAudioData(buffer)).then(decoded => {
+    fetch('assets/frog-croak.mp3').then(response => {
+      if (!response.ok) throw new Error('Audio katak tidak tersedia.');
+      return response.arrayBuffer();
+    }).then(buffer => audioContext.decodeAudioData(buffer)).then(decoded => {
       croakAudioBuffer = decoded;
     }).catch(() => {}).finally(() => { croakAudioLoading = false; });
   }
@@ -175,6 +180,9 @@
       this.session = 0;
       this.facingAngle = 0;
       this.isAnswering = false;
+      this.lastClockSeconds = null;
+      this.lastTimerProgress = null;
+      this.lastElapsedSecond = null;
       this.waypoints = [];
       this.currentWaypoint = { x: START_POINT.x, y: START_POINT.y, worldX: START_POINT.x, worldY: START_POINT.y, label: 'START', start: true };
       this.lastCorrectWaypoint = this.currentWaypoint;
@@ -259,7 +267,7 @@
       this.selectLevel(this.selectedLevel, false);
       this.updateStartDetails();
       this.hud();
-      this.clock();
+      this.clock(true);
     }
 
     bindEvents() {
@@ -309,6 +317,7 @@
       formatText(this.el.selectedLevelTime, info.seconds);
       formatText(this.el.sceneLevelLabel, info.shortLabel || info.label);
       formatText(this.el.sceneTopic, info.description);
+      formatText(this.el.headingSuffix, ' · ' + subjectInfo[this.selectedSubject].label + ' · ' + (info.shortLabel || info.label));
       this.updateStartDetails();
       if (shouldAnnounce) announce(this.label + ': ' + info.label + ' dipilih. ' + info.description + '.');
       return true;
@@ -323,14 +332,30 @@
       formatText(this.el.scoreValue, this.round ? this.round.score : 0);
     }
 
-    clock() {
+    clock(force = false) {
       const totalSeconds = this.round?.secondsPerQuestion || phaseInfoFor(this.selectedSubject, this.selectedLevel).seconds;
+      const totalMs = totalSeconds * 1000;
       const seconds = Math.max(0, Math.ceil(this.remainingMs / 1000));
-      formatText(this.el.secondsValue, seconds);
-      this.el.countdown.classList.toggle('urgent', seconds <= 5);
-      this.el.countdown.setAttribute('aria-label', seconds + ' detik tersisa');
-      this.el.timerProgress.style.strokeDashoffset = String(213.63 * (1 - Math.max(0, this.remainingMs) / (totalSeconds * 1000)));
-      formatText(this.el.elapsedValue, formatTime(this.elapsedMs));
+      const timerProgress = Math.max(0, Math.min(1, this.remainingMs / totalMs));
+      const progressBucket = Math.round(timerProgress * 100);
+      const elapsedSecond = Math.floor(this.elapsedMs / 1000);
+
+      // The game loop runs at display refresh rate for smooth jumps. Text and
+      // SVG updates only need to happen when their visible value changes.
+      if (force || this.lastClockSeconds !== seconds) {
+        formatText(this.el.secondsValue, seconds);
+        this.el.countdown.classList.toggle('urgent', seconds <= 5);
+        this.el.countdown.setAttribute('aria-label', seconds + ' detik tersisa');
+        this.lastClockSeconds = seconds;
+      }
+      if (force || this.lastTimerProgress !== progressBucket) {
+        this.el.timerProgress.style.strokeDashoffset = String(213.63 * (1 - timerProgress));
+        this.lastTimerProgress = progressBucket;
+      }
+      if (force || this.lastElapsedSecond !== elapsedSecond) {
+        formatText(this.el.elapsedValue, formatTime(this.elapsedMs));
+        this.lastElapsedSecond = elapsedSecond;
+      }
     }
 
     clearFrog() {
@@ -483,6 +508,9 @@
       if (!this.round || this.round.status !== 'playing') return;
       const question = this.round.question;
       this.remainingMs = this.round.secondsPerQuestion * 1000;
+      this.lastClockSeconds = null;
+      this.lastTimerProgress = null;
+      this.lastElapsedSecond = null;
       const retryLabel = question.retry ? ' · Latihan ulang' : '';
       this.el.questionCounter.textContent = 'Soal ' + (this.round.presentedCount + 1) + ' · dikuasai ' + this.round.correct + ' / ' + this.round.target + ' · ' + phaseInfoFor(this.selectedSubject, this.round.phase).shortLabel + retryLabel;
       formatText(this.el.questionText, question.text);
@@ -512,7 +540,7 @@
       this.clearFrog();
       this.layoutAnswerPlatforms();
       this.hud();
-      this.clock();
+      this.clock(true);
       announce(this.label + ': soal ' + (this.round.presentedCount + 1) + '. ' + cleanForSpeech(question.text) + '. Pilihan: ' + question.options.map((option, index) => labels[index] + ', ' + cleanForSpeech(option)).join('; ') + '.');
     }
 
@@ -526,6 +554,9 @@
       this.round = null;
       this.elapsedMs = 0;
       this.remainingMs = phaseInfoFor(this.selectedSubject, this.selectedLevel).seconds * 1000;
+      this.lastClockSeconds = null;
+      this.lastTimerProgress = null;
+      this.lastElapsedSecond = null;
       this.resetRoute();
       this.clearFrog();
       this.el.startCountdown.hidden = true;
@@ -539,6 +570,7 @@
       this.el.feedback.className = 'feedback';
       this.el.confetti.replaceChildren();
       this.hud();
+      this.clock(true);
       ensureLoop();
       announce(this.label + ': kembali ke menu utama.');
     }
@@ -570,6 +602,9 @@
       this.round.status = 'countdown';
       this.elapsedMs = 0;
       this.remainingMs = this.round.secondsPerQuestion * 1000;
+      this.lastClockSeconds = null;
+      this.lastTimerProgress = null;
+      this.lastElapsedSecond = null;
       this.paused = false;
       this.isAnswering = false;
       const info = phaseInfoFor(this.selectedSubject, level);
@@ -588,6 +623,7 @@
       this.resetRoute();
       this.clearFrog();
       this.hud();
+      this.clock(true);
       focusedBoard = this;
       initAudio();
       ensureLoop();

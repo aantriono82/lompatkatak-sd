@@ -1,10 +1,14 @@
 # Brief aset visual
 
-Semua aset aktif dibuat sebagai aset lokal agar permainan tetap dapat dipakai tanpa koneksi internet. Latar permainan menggunakan `assets/ngarai-clean.png`; aset karakter dan platform dibuat sebagai SVG buatan baru agar tetap tajam dan ringan.
+Semua aset aktif dibuat sebagai aset lokal agar permainan tetap dapat dipakai tanpa koneksi internet. Latar permainan menggunakan `assets/ngarai-clean.webp`; aset karakter dan platform dibuat sebagai SVG/PNG lokal agar tetap tajam dan ringan.
 
-## assets/ngarai-clean.png
+## assets/ngarai-clean.webp
 
-Clean canyon background for the active game scene. The baked-in question card, frog, and gray answer platforms were removed so the live UI can render them independently.
+Clean canyon background for the active game scene. The baked-in question card, frog, and gray answer platforms were removed so the live UI can render them independently. The WebP delivery version keeps the same 1697 × 927 composition at a much smaller download size; the original PNG remains in the folder as the source asset.
+
+## assets/frog-128.webp dan assets/frog-256.webp
+
+Compressed 128 × 128 and 256 × 256 start-screen mascot variants derived from `frog.png`. The smaller file is used on narrow screens and the larger file on desktop; the original PNG remains in the folder as the source asset.
 
 ## assets/canyon-bg.svg
 
@@ -26,9 +30,9 @@ Transparent raster jumping frog based on the supplied reference image. Used whil
 
 Original transparent vector answer platform: a small rounded irregular wooden board floating in perspective, warm brown-orange plank surface, darker underside shadow, carved grain lines, soft dark outline, and enough empty center area for an HTML answer label. No letters, no numbers, no frog, no background, no logo, no watermark.
 
-## assets/ngarai.webp
+## assets/ngarai-clean.png dan assets/ngarai.webp (sumber)
 
-Active wide game background supplied in the project assets. It shows the canyon scene used behind the question board, answer platforms, frog, and finish sign. It is rendered with `cover` so the scene adapts to touch screens and large IFP displays.
+Source/background variants supplied in the project assets. The game uses `ngarai-clean.webp` behind the question board, answer platforms, frog, and finish sign. It is rendered with `cover` so the scene adapts to touch screens and large IFP displays.
 
 ## Audio
 

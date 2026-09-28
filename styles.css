@@ -57,7 +57,7 @@ button:disabled { cursor: default; }
 .hud .question-illustration { width: clamp(34px, 4vw, 58px); height: clamp(26px, 3vw, 42px); }
 .hud .question-box h2 { font-size: clamp(10px, 1.15vw, 18px); line-height: 1.08; }
 
-.pond { position: relative; flex: 1 1 auto; min-height: 520px; overflow: hidden; container-type: inline-size; background: #83c4d1 url('assets/ngarai-clean.png') center / cover no-repeat; }
+.pond { position: relative; flex: 1 1 auto; min-height: 520px; overflow: hidden; container-type: inline-size; background: #83c4d1 url('assets/ngarai-clean.webp') center / cover no-repeat; }
 .scene-glow { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 51% 47%, #fff5bf55, transparent 34%), linear-gradient(180deg, transparent 58%, #19362d44); z-index: 1; }
 .scene-vignette { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 80px #132b2a66; z-index: 2; }
 .level-sign, .finish-sign { position: absolute; z-index: 11; color: #3d2b25; background: linear-gradient(#f8eac8, #dab879); border: 3px solid #604032; box-shadow: 0 4px 0 #3c2b2a66, inset 0 0 0 2px #fff4c766; transform: rotate(-2deg); }
@@ -138,6 +138,7 @@ button:disabled { cursor: default; }
 .start-screen h2 { max-width: 650px; margin: 0; color: #fff4c8; font-size: clamp(21px, 3cqw, 42px); line-height: 1.1; }
 .start-intro { max-width: 560px; margin: 9px 0 10px; color: #dbe9c7; font-size: clamp(12px, 1.25cqw, 17px); line-height: 1.4; }
 .level-picker { width: min(720px, 100%); display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 4px 0 14px; }
+.subject-picker { grid-template-columns: repeat(3, 1fr); }
 .level-option { min-width: 0; min-height: 105px; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #fff8df; background: #214c3fdb; border: 2px solid #9dc38199; border-radius: 14px; box-shadow: 0 4px 0 #132f2b88; transition: transform .15s, background .15s, border-color .15s; }
 .level-option:hover { transform: translateY(-3px); background: #356c4ccc; }
 .level-option.disabled, .level-option:disabled { cursor: not-allowed; opacity: .55; filter: grayscale(.25); transform: none; }
@@ -264,6 +265,20 @@ dialog .secondary-button { width: 100%; margin-top: 10px; color: #32513d; border
   .frog { width: 14%; }
 }
 
+@media (min-width: 821px) and (max-height: 900px) {
+  .start-screen, .result-screen { justify-content: flex-start; overflow-y: auto; padding-top: 16px; padding-bottom: 22px; }
+  .start-mascot { width: 92px; height: 58px; }
+  .start-screen h2 { font-size: clamp(21px, 2.5cqw, 34px); }
+  .start-intro { margin: 5px 0 7px; }
+  .level-picker { gap: 7px; margin: 3px 0 8px; }
+  .level-option { min-height: 67px; padding: 4px 6px; }
+  .level-icon { width: 32px; height: 22px; }
+  .player-name-card { margin-bottom: 8px; }
+  .player-name-input { height: 38px; }
+  .primary-button { min-height: 40px; padding: 7px 22px; }
+  .start-details { margin-top: 6px; }
+}
+
 @media (max-width: 560px) {
   .site-header { height: 52px; }
   .site-header-inner { padding: 0 8px; gap: 6px; }
@@ -314,20 +329,21 @@ dialog .secondary-button { width: 100%; margin-top: 10px; color: #32513d; border
   .elapsed { padding: 5px 9px; font-size: 11px; border-width: 2px; }
   .icon-button { width: 34px; height: 34px; border-radius: 9px; font-size: 18px; }
   .feedback { bottom: 16%; min-width: 0; max-width: 90%; padding: 7px 12px; font-size: 11px; }
-  .start-screen, .result-screen { padding: 12px 10px 20px; }
-  .start-mascot { width: 92px; height: 78px; }
-  .start-screen h2 { font-size: 20px; }
-  .start-intro { max-width: 310px; font-size: 11px; }
+  .start-screen, .result-screen { justify-content: flex-start; overflow-y: auto; padding: 12px 10px 20px; }
+  .start-mascot { width: 70px; height: 54px; }
+  .start-screen h2 { font-size: 18px; }
+  .start-intro { max-width: 310px; margin: 5px 0 7px; font-size: 10px; }
   .level-picker { gap: 5px; margin-bottom: 9px; }
-  .level-option { min-height: 87px; padding: 6px 3px; border-radius: 10px; }
-  .level-icon { width: 34px; height: 24px; }
+  .subject-picker { grid-template-columns: repeat(2, 1fr); }
+  .level-option { min-height: 62px; padding: 4px 3px; border-radius: 10px; }
+  .level-icon { width: 32px; height: 22px; margin-bottom: 1px; }
   .level-option strong { font-size: 11px; }
   .level-option small { font-size: 8px; }
   .player-name-card { width: min(270px, 90%); margin-bottom: 9px; }
   .player-name-label { font-size: 11px; }
-  .player-name-input { height: 37px; font-size: 12px; }
-  .start-button { min-height: 40px; font-size: 14px; }
-  .start-details { font-size: 9px; }
+  .player-name-input { height: 34px; font-size: 12px; }
+  .start-button { min-height: 37px; font-size: 13px; }
+  .start-details { margin-top: 6px; font-size: 9px; }
   .result-screen h2 { font-size: 34px; }
   .result-message { font-size: 12px; }
   .result-stats { gap: 4px; margin-bottom: 9px; }

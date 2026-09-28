@@ -5,14 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#264d3d">
   <meta name="description" content="Menyeberang Ngarai: game belajar untuk siswa sekolah dasar.">
+  <link rel="preload" as="image" href="assets/ngarai-clean.webp" type="image/webp" fetchpriority="high">
   <title>Menyeberang Ngarai — Game Belajar SD</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23264d3d'/%3E%3Ccircle cx='11' cy='13' r='7' fill='%238ed866'/%3E%3Ccircle cx='21' cy='13' r='7' fill='%238ed866'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=28">
+  <link rel="stylesheet" href="styles.css?v=33">
 </head>
 <body>
   <header class="site-header">
     <div class="site-header-inner">
-      <a class="brand" href="./" aria-label="Menyeberang Ngarai, halaman awal"><span class="brand-mark" aria-hidden="true">🐸</span><span>Menyeberang</span> Ngarai</a>
+      <a class="brand" href="./" aria-label="ATIGA GAME, halaman awal"><span class="brand-mark" aria-hidden="true">🐸</span><span>ATIGA</span> GAME</a>
     <span class="site-context">GAME BELAJAR <span>·</span> SEKOLAH DASAR</span>
       <div class="header-user-box" title="Nama pemain">
         <span class="header-user-icon" aria-hidden="true">👤</span>
@@ -80,14 +81,20 @@
         </div>
 
         <section class="start-screen" aria-label="Mulai permainan">
-          <div class="start-mascot"><img class="start-frog" src="assets/frog.png" alt="Katak siap melompat"></div>
+          <div class="start-mascot"><picture><source media="(max-width: 560px), (max-height: 900px)" srcset="assets/frog-128.webp"><img class="start-frog" src="assets/frog-256.webp" width="256" height="256" alt="Katak siap melompat" decoding="async"></picture></div>
           <p class="eyebrow">PETUALANGAN BELAJAR</p>
           <h2>Bantu katak menemukan jalan pulang!</h2>
           <p class="start-intro">Jawab soal dengan tepat agar katak bisa melompat dari papan ke papan sampai tanda OUT.</p>
           <div class="subject-picker level-picker" role="group" aria-label="Pilih mata pelajaran">
             <button class="level-option subject-option active" type="button" data-subject="matematika" aria-pressed="true"><span class="level-icon" data-icon="subject-matematika"></span><strong>Matematika</strong><small>Fase A · B · C</small></button>
-            <button class="level-option subject-option" type="button" data-subject="ipas" aria-pressed="false"><span class="level-icon" data-icon="subject-ipas"></span><strong>IPAS</strong><small>Fase A · B · C</small></button>
-            <button class="level-option subject-option disabled" type="button" data-subject="bahasa-inggris" aria-disabled="true" disabled><span class="level-icon" data-icon="subject-bahasa-inggris"></span><strong>Bahasa Inggris</strong><small>Segera hadir</small></button>
+            <button class="level-option subject-option" type="button" data-subject="ipa" aria-pressed="false"><span class="level-icon" data-icon="subject-ipa"></span><strong>IPA</strong><small>Fase A · B · C</small></button>
+            <button class="level-option subject-option" type="button" data-subject="ips" aria-pressed="false"><span class="level-icon" data-icon="subject-ips"></span><strong>IPS</strong><small>Fase A · B · C</small></button>
+            <button class="level-option subject-option" type="button" data-subject="bahasa-inggris" aria-pressed="false"><span class="level-icon" data-icon="subject-bahasa-inggris"></span><strong>Bahasa Inggris</strong><small>Fase A · B · C</small></button>
+            <button class="level-option subject-option" type="button" data-subject="bahasa-indonesia" aria-pressed="false"><span class="level-icon" data-icon="subject-bahasa-indonesia"></span><strong>Bahasa Indonesia</strong><small>Fase A · B · C</small></button>
+            <button class="level-option subject-option" type="button" data-subject="pai-budi-pekerti" aria-pressed="false"><span class="level-icon" data-icon="subject-pai-budi-pekerti"></span><strong>PAI dan Budi Pekerti</strong><small>Fase A · B · C</small></button>
+            <button class="level-option subject-option" type="button" data-subject="pendidikan-pancasila" aria-pressed="false"><span class="level-icon" data-icon="subject-pendidikan-pancasila"></span><strong>Pendidikan Pancasila</strong><small>Fase A · B · C</small></button>
+            <button class="level-option subject-option" type="button" data-subject="pjok" aria-pressed="false"><span class="level-icon" data-icon="subject-pjok"></span><strong>PJOK</strong><small>Fase A · B · C</small></button>
+            <button class="level-option subject-option" type="button" data-subject="seni-budaya" aria-pressed="false"><span class="level-icon" data-icon="subject-seni-budaya"></span><strong>Seni Budaya</strong><small>Fase A · B · C</small></button>
           </div>
           <div class="phase-picker level-picker" role="group" aria-label="Pilih fase pembelajaran">
             <button class="level-option active" type="button" data-level="A" aria-pressed="true"><span class="level-icon" data-icon="phase-A"></span><strong>Fase A</strong><small>Kelas 1–2 · 20 soal</small></button>
@@ -114,12 +121,12 @@
   </template>
 
   <dialog id="settings-dialog" aria-labelledby="settings-title"><div class="dialog-heading"><h2 id="settings-title">Jeda sebentar</h2><button class="close-button" id="close-settings" type="button" aria-label="Tutup pengaturan">×</button></div><p class="dialog-note" id="pause-note">Atur suara permainan.</p><label class="sound-row" for="sound-toggle"><span>Efek suara</span><input type="checkbox" id="sound-toggle" checked><span class="switch" aria-hidden="true"></span></label><button class="primary-button" id="continue-button" type="button">Lanjut bermain</button><button class="secondary-button" id="settings-home-button" type="button">⌂ Kembali ke menu utama</button><button class="text-button" id="quit-button" type="button" hidden>Akhiri dan lihat skor</button><button class="text-button danger-text" id="clear-history-button" type="button">Hapus riwayat pemain</button></dialog>
-  <dialog id="help-dialog" aria-labelledby="help-title"><div class="dialog-heading"><h2 id="help-title">Cara bermain</h2><button class="close-button" id="close-help" type="button" aria-label="Tutup petunjuk">×</button></div><ol class="instructions"><li>Pilih Matematika atau IPAS, lalu pilih Fase A, B, atau C dan tulis nama kamu.</li><li>Baca soal pada papan kayu di atas.</li><li>Pilih satu dari tiga platform jawaban: A, B, atau C.</li><li>Jawaban benar menguasai satu slot dan membuat katak melompat. Jawaban salah mengurangi satu nyawa dan mendapat latihan ulang beberapa soal kemudian.</li><li>Kuasai 20 slot untuk mencapai papan OUT. Jawaban benar bernilai 10 poin, jawaban salah atau waktu habis mengurangi 5 poin.</li><li>Setelah selesai, buka pembahasan untuk melihat semua percobaan.</li></ol><p class="dialog-note">Permainan berhenti otomatis saat petunjuk, pengaturan, atau tab lain dibuka.</p><button class="primary-button" id="help-done" type="button">Aku siap!</button></dialog>
+  <dialog id="help-dialog" aria-labelledby="help-title"><div class="dialog-heading"><h2 id="help-title">Cara bermain</h2><button class="close-button" id="close-help" type="button" aria-label="Tutup petunjuk">×</button></div><ol class="instructions"><li>Pilih Matematika, IPA, IPS, Bahasa Inggris, Bahasa Indonesia, PAI dan Budi Pekerti, Pendidikan Pancasila, PJOK, atau Seni Budaya, lalu pilih Fase A, B, atau C dan tulis nama kamu.</li><li>Baca soal pada papan kayu di atas.</li><li>Pilih satu dari tiga platform jawaban: A, B, atau C.</li><li>Jawaban benar menguasai satu slot dan membuat katak melompat. Jawaban salah mengurangi satu nyawa dan mendapat latihan ulang beberapa soal kemudian.</li><li>Kuasai 20 slot untuk mencapai papan OUT. Jawaban benar bernilai 10 poin, jawaban salah atau waktu habis mengurangi 5 poin.</li><li>Setelah selesai, buka pembahasan untuk melihat semua percobaan.</li></ol><p class="dialog-note">Permainan berhenti otomatis saat petunjuk, pengaturan, atau tab lain dibuka.</p><button class="primary-button" id="help-done" type="button">Aku siap!</button></dialog>
   <dialog id="report-dialog" class="report-dialog" aria-labelledby="report-title"><div class="dialog-heading"><h2 id="report-title">Pembahasan jawaban</h2><button class="close-button" id="close-report" type="button" aria-label="Tutup pembahasan">×</button></div><div id="report-content"></div></dialog>
 
-  <script src="illustrations.js?v=6"></script>
-  <script src="questions.js?v=8"></script>
-  <script src="engine.js?v=7"></script>
-  <script src="game.js?v=32"></script>
+  <script src="illustrations.js?v=12" defer></script>
+  <script src="questions.js?v=14" defer></script>
+  <script src="engine.js?v=7" defer></script>
+  <script src="game.js?v=33" defer></script>
 </body>
 </html>
